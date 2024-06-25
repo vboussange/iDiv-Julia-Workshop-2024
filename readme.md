@@ -1,6 +1,6 @@
 # Practical introduction to Julia for biodiversity research
 
-This repository contains materials for the [iDiv Julia Workshop 2024]() **Practical introduction to Julia for biodiversity research**, held on the 27th to 29th of August 2024 at iDiv, Leipzig, Germany. It should contain useful resources and guidelines to curious ecologists who want to get an overview or get started with the Julia language. 
+This repository contains materials for the [yDiv Julia Workshop 2024]() **Practical introduction to Julia for biodiversity research**, held on the 27th to 29th of August 2024 for the yDiv Graduate School & Postdoc Programme at iDiv, Leipzig, Germany. It should contain useful resources and guidelines to curious ecologists who want to get an overview or get started with the Julia language. 
 
 # Content
 
