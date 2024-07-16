@@ -68,8 +68,9 @@ How you should read this program
 
 ### Afternoon session 3
 **13:30 - 15:00**
+- 🎤 Why I like Julia (@Daniel)
 
-- 🎤 [Overview of the ecosystem](Day1/31_julia_ecosystem/31_julia_ecosystem.ipynb) () **13:30-13:45**
+- 🎤 [Overview of the package ecosystem](Day1/31_julia_ecosystem/31_julia_ecosystem.ipynb) (@Victor) **13:30-13:45**
 
 - 🎤 💻 [loading and saving data, `DataFrames`, broadcasting](Day1/32_dataframe_tuto/32_dataframe_tuto.ipynb) (@Victor) **13:45-14:05**
 
@@ -77,7 +78,7 @@ How you should read this program
 - 💻 [Hands-on exercises](Day1/32_dataframe_tuto/33_dataframe_exercises.md) **14:05-14:30**
 
 
-- 🎤 💻 [Plotting and visualisation](Day1/33_plotting/33_plotting.ipynb) () **14:30-14:45**
+- 🎤 💻 [Plotting and visualisation](Day1/33_plotting/33_plotting.ipynb) (@Victor) **14:30-14:45**
 
 - 💻 [Hands-on exercises continued](Day1/32_dataframe_tuto/33_dataframe_exercises.md) **14:45-15:00**
 
@@ -98,7 +99,7 @@ The goal of this second-day workshop is
 
 ### Morning session 1
 
-- 🎤 💻 [Geospatial data handling](Day2/11_geodata/11_geodata.ipynb) () **9:00-9:30**
+- 🎤 💻 [Geospatial data handling](Day2/11_geodata/11_geodata.ipynb) (@Francesco) **9:00-9:30**
   - [Hands-on exercises](Day2/11_geodata/11_geodata-ex.ipynb)
 
 - 🎤 💻 [Performant Julia code and profiling](Day2/12_performance/12_performance.md) (@Daniel) **9:30-10:00**
@@ -114,67 +115,67 @@ The goal of this second-day workshop is
 **10:30-11:00**
 
 ### Morning session 2
-- 💻🎤[Julia projects managements](Day1/22_pkg_and_project_management/practical_guideline.ipynb) **11:00-11:30**
+- 💻🎤[Julia projects managements](Day1/22_pkg_and_project_management/practical_guideline.ipynb) (@Victor) **11:00-11:30**
   - 💻[Exercise: Develop your first Julia project - Part 2](Day1/22_pkg_and_project_management/exercise2.md) 
 
 - 🎤 [Interface with Python, R, MATLAB](Day2/21_interface/interface.ipynb) (@Victor) **11:30-12:00**
 
-- 🎤 Track Introductions (@Victor, @Daniel, @Ludmilla) **12:00-12:30**
-  - [Biodiversity track](#biodiversity-track)
-  - [Glaciology track](#glaciology-track)
+- 🎤 Track Introductions (@Victor, @Daniel, @Ludmilla, @Francesco) **12:00-12:30**
+  - [Spatio-temporal biodiversity modelling track](#biodiversity-track)
   - [Individual-based modelling track](#daniels-track)
 
 ### Lunch
 **12:30 - 13:30**
 
 ### Afternoon session 3
-- 💻 Project session **13:30-15:00**
+- 🎤 Advanced Julia constructs: type system, functional programming, metaprogramming (@Daniel)
+  - Hands-on exercises
+- 🎤 Good (Julia) practices (@Ludmilla)
 
 ### Coffee break 
 **15:00-15:30**
 
 ### Afternoon session 4
-- 💻 Project session **15:30-17:00**
-
-
-### Lunch
+- Track-specific topics
+  - 🎤 Time series modelling (@Francesco)
+    - Hands-on exercises
+  - 🎤 Differentiable programming (@Victor)
+    - Hands-on exercises
+  - 🎤Individual-based modelling (@Daniel)
 
 ## Day 3: Project-oriented day
 
 The goal of this third-day workshop is to provide participants with an opportunity to deepen their knowledge of the Julia programming language through biodiversity and glaciology-related projects. 
 
 ### Morning session 1
-- 🎤 Why I like Julia (@Daniel) **09:00-09:15**
-- 💻 Project session **09:15-10:30**
+- 💻 Project session
 
 ### Coffee break 
 **10:30-11:00**
 
 ### Morning session 2
-- 💻 Project session **11:00-12:30**
+- 💻 Project session
 
 ### Lunch
 **12:30 - 13:30**
 
 ### Afternoon session 3
-- 💻 Project session **13:30-15:00**
+- 💻 Project session
 
 ### Coffee break 
 **15:00-15:30**
 
 ### Afternoon session 4
 
-- 💻 Project session **15:40-16:30**
+- 💻 Project session
 
-- 🎤 Wrap-up and feedback **16:30 - 17:00**
+- 🎤 Wrap-up and feedback
 
 
 # Projects
 ## Victor's track
 
-- [Deep learning-based Species Distribution Model](Projects/Victor/ml-based-SDM/DL-based-SDM_project.md)
-- [Constructing a benchmark of PiecewiseInference.jl against ApproxBayes.jl and Turing.jl](Projects/Victor/PiecewiseInference-benchmark/PiecewiseInference-benchmark.md)
-- [Time series modelling](Projects/Victor/time-series-modelling/time-series-modelling.md)
+- [Spatio-temporal biodiversity modelling](Projects/Victor/ml-based-SDM/DL-based-SDM_project.md)
 
 ## Daniel's track
 
