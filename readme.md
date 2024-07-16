@@ -71,7 +71,7 @@ How you should read this program
 
 - 🎤 [Overview of the ecosystem](Day1/31_julia_ecosystem/31_julia_ecosystem.ipynb) () **13:30-13:45**
 
-- 🎤 💻 [`DataFrames`, broadcasting, loading CSV](Day1/32_dataframe_tuto/32_dataframe_tuto.ipynb) (@Victor) **13:45-14:05**
+- 🎤 💻 [loading and saving data, `DataFrames`, broadcasting](Day1/32_dataframe_tuto/32_dataframe_tuto.ipynb) (@Victor) **13:45-14:05**
 
 
 - 💻 [Hands-on exercises](Day1/32_dataframe_tuto/33_dataframe_exercises.md) **14:05-14:30**
@@ -86,7 +86,6 @@ How you should read this program
 
 ### Afternoon session 4
 - 🎤 [Why I like Julia](https://github.com/luraess/WSLJulia2023) (@Ludmilla) **15:30-15:45**
-- 🎤 💻 [Saving and loading data in Julia]() () **-15:45-15:55**
 - 💻 [Coding the game of life](Day1/42_game_of_life/42_game_of_life.md) **15:55-17:00**
 
 
