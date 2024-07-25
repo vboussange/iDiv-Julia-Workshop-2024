@@ -115,7 +115,7 @@ The goal of this second-day workshop is
 **10:30-11:00**
 
 ### Morning session 2
-- 💻🎤[Julia projects managements](Day1/22_pkg_and_project_management/practical_guideline.ipynb) (@Victor) **11:00-11:30**
+- 💻🎤[Julia project management](Day2/22_pkg_and_project_management/practical_guideline.ipynb) (@Victor) **11:00-11:30**
   - 💻[Exercise: Develop your first Julia project - Part 2](Day1/22_pkg_and_project_management/exercise2.md) 
 
 - 🎤 [Interface with Python, R, MATLAB](Day2/21_interface/interface.ipynb) (@Victor) **11:30-12:00**
