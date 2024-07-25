@@ -42,9 +42,9 @@ know where that is)
 ### Morning session 1
 **9:00 - 10:30**
 
-- 🎤 [Greetings to the Workshop](Day1/11_welcome.ipynb) ( and @Victor) **9:00-9:10**
-- 🎤 [Overview of the Julia programming language](Day1/12_julia-overview/12_julia-overview.pdf) () **9:10-9:30**
-- 🎤💻 [**Practical**: your first lines of Julia code](Day1/13_julia-practical-on-jupyter/output/13_julia-practical-on-jupyter.ipynb) () **9:30-10:30**
+- 🎤 [Greetings to the Workshop](Day1/11_welcome.ipynb) (@Victor) **9:00-9:10**
+- 🎤 [Overview of the Julia programming language](Day1/12_julia-overview/12_julia-overview.pdf) (@Daniel) **9:10-9:30**
+- 🎤💻 [**Practical**: your first lines of Julia code](Day1/13_julia-practical-on-jupyter/output/13_julia-practical-on-jupyter.ipynb) (@Daniel and @Victor) **9:30-10:30**
   - Basic syntax and data types
   - Control flow and conditional statements
 
