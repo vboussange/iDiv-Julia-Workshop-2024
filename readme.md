@@ -43,7 +43,7 @@ How you should read this program
 
 - 🎤 [Greetings to the Workshop](Day1/11_welcome.ipynb) (@Victor) **9:00-9:15**
 - 🎤 [Overview of the Julia programming language](Day1/12_julia-overview/12_julia-overview.pdf) (@Daniel) **9:15-9:45**
-- 🎤💻 [**Practical**: your first lines of Julia code](Day1/13_julia-practical-on-jupyter/output/13_julia-practical-on-jupyter.ipynb) (@Daniel and @Victor) **9:45-10:30**
+- 🎤💻 [**Practical**: your first lines of Julia code](Day1/13_julia-practical-on-jupyter/13_julia-practical-on-jupyter.ipynb) (@Daniel and @Victor) **9:45-10:30**
   - Basic syntax and data types
   - Control flow and conditional statements
 
@@ -55,8 +55,8 @@ How you should read this program
 - 🎤 [Why I like Julia](Day1/21_why-i-like-julia-VB/21_why-i-like-julia-VB.ipynb) (@Victor) **11:00-11:15**
 
 - Package and project management (@Victor) **11:15-11:45**
-  - 💻🎤 [Introduction to `Pkg.jl`](Day1/22_pkg_and_project_management/Pkg.ipynb)
-  - 💻[Exercise: activate an environment and run the associated script](Day1/22_pkg_and_project_management/exercise1.md)
+  - 💻🎤 [Introduction to `Pkg.jl`](Day1/22_pkg/Pkg.ipynb)
+  - 💻[Exercise: activate an environment and run the associated script](Day1/22_pkg/exercise1.md)
   - 💻[Exercise: Develop your first Julia project - Part 1](Day1/22_pkg_and_project_management/exercise2.md)
 
 - 💻🎤 [VS code workflow and remote development](Day1/23_vscode_remote_dev/vs_code_workflow.ipynb) (@Victor) **11:45-12:30**
@@ -173,25 +173,27 @@ The goal of this third-day workshop is to provide participants with an opportuni
 
 
 # Projects
-## Victor's track
+----
+**Victor's track**: [Ecologically-informed neural network](Projects/Victor/ecologically-informed-nn/ecologically-informed-nn.md)
 
-- [Spatio-temporal biodiversity modelling](Projects/Victor/ml-based-SDM/DL-based-SDM_project.md)
+#### Suggested reading
+- [Introduction to Scientific Machine Learning through Physics-Informed Neural Networks](https://book.sciml.ai/notes/03-Introduction_to_Scientific_Machine_Learning_through_Physics-Informed_Neural_Networks/)
+- [Lagergren et al. (2020)](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008462)
+----
+- **Daniel's track**: Individual-based modelling (tbd)
 
-## Daniel's track
-
-- Individual-based modelling (tbd)
-
-### suggested reading
+#### suggested reading
 
 - [Datseris et al. (2022). Agents.jl description](https://doi.org/10.1177/00375497211068820)
 - [Günther et al. (2021) Sample use of Agents.jl](https://doi.org/10.3390/land10121366)
 
+---
+**Ludmilla's track**
 
-## Ludmilla's track
+---
+**Oskar's track**
 
-
-## Oskar's track
-
+----
 
 # Additional resources
 - [Julia official list of tutorials](https://julialang.org/learning/tutorials/)
