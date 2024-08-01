@@ -75,7 +75,7 @@ How you should read this program
 - [Introduction to Julia, JuliaCon 2022](https://github.com/storopoli/Julia-Workshop), and the [YouTube video](https://www.youtube.com/watch?v=uiQpwMQZBTA) (3 hours)
 - [Introductory Julia tutorial by Martin D. Maas](https://www.matecdev.com/posts/julia-tutorial-science-engineering.html)
 - [Julia Workshop for Data Science](https://crsl4.github.io/julia-workshop/session1-get-started.html)
-- 
+
 # Acknowledgments
 
 The workshop materials are based on numerous resources, which have been indicated in the different sections.
