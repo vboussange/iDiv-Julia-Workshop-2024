@@ -53,7 +53,7 @@ Add a title to the plot and label the x and y axes. Then, Save the plot to a pdf
 
 ### Analyzing GBIF dataset using DataFrames, Broadcasting, and Data Visualization
 
-First, let's load GBIF data.
+First, let's load GBIF data. Use [GBIF2](https://github.com/rafaqz/GBIF2.jl).
 
 
 
@@ -91,5 +91,5 @@ For this, construct a function `normalize`, that takes in a vector of floating p
 > 🥳 Congrats! You are done with this session of exercises.
 ## Solutions
 
-You may find solutions to these exercises [here](/Users/victorboussange/ETHZ/PostDoc_ELE/teaching/WSL_workshop_Julia/material/Day1/32_dataframe_tuto/33_dataframe_exercises_with_sols.jmd).
+You may find solutions to these exercises [here](33_dataframe_exercises_with_sols.jmd).
 

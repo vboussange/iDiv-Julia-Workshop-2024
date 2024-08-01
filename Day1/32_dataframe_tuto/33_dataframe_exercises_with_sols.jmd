@@ -84,7 +84,7 @@ fig.savefig("iris.pdf", dpi=100)
 
 ### Analyzing GBIF dataset using DataFrames, Broadcasting, and Data Visualization
 
-First, let's load GBIF data.
+First, let's load GBIF data. Use [GBIF2](https://github.com/rafaqz/GBIF2.jl).
 ```julia
 using GBIF2, DataFrames
 
