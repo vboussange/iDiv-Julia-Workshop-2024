@@ -20,14 +20,13 @@ using Flux
 using Flux: gradient, train!
 using Flux.Optimise: update!
 using DelimitedFiles, Statistics
-using Parameters: @with_kw
 
 
 # ## Data 
 
 # We create the function `get_processed_data` to load the housing data, and normalize it.
 
-function get_processed_data(split_ratio=0.1)
+function get_processed_data(split_ratio=0.9)
     isfile("housing.data") ||
         download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
             "housing.data")
@@ -39,7 +38,20 @@ function get_processed_data(split_ratio=0.1)
     x = rawdata[1:13,:]
     y = rawdata[14:14,:]
 
-    return [(x,y)]
+    ## Normalise the data
+    x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
+
+    ## Split into train and test sets
+    split_index = floor(Int,size(x,2)*split_ratio)
+    x_train = x[:,1:split_index]
+    y_train = y[:,1:split_index]
+    x_test = x[:,split_index+1:size(x,2)]
+    y_test = y[:,split_index+1:size(x,2)]
+
+    train_data = (x_train, y_train)
+    test_data = (x_test, y_test)
+
+    return train_data,test_data
 end
 
 
@@ -64,24 +76,25 @@ loss(model, x, y) = mean(abs2.(model(x) .- y));
 
 function train()
     
-    ## Load the data
-    data = get_processed_data()
+    (x_train,y_train),(x_test,y_test) = get_processed_data()
 
     ## Training
-    opt = Flux.setup(Adam(), model)
+    opt = Flux.setup(Adam(0.1), model)
 
-    for epoch in 1:200
-        if epoch % 50 == 1
+    for epoch in 1:500
+        if epoch % 50 == 0
             println("epoch = $epoch")
+            err = loss(model, x_test, y_test)
+            @show err
         end
-        train!(loss, model, data, opt)
+
+        l, (grad,) = Flux.withgradient(model) do m
+            loss(m, x_train, y_train)
+        end
+        Flux.update!(opt, model, grad)
     end    
 
-    # println(loss(model, data...))
 end
-
-# ## Run the example 
-# We call the `train` function to run the Housing data example:
 
 cd(@__DIR__)
 train()

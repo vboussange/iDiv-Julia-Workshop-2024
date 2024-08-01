@@ -61,4 +61,4 @@ my_project/
 - Use a shell script to run `my-analysis.jl`
 
 ## Solutions
-You may find the solutions in the `Day1/23_practical-guidelines/my_project_solutions` folder.
+You may find the solutions in the `my_project_solutions/` folder.
