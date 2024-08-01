@@ -64,10 +64,9 @@ How you should read this program
 - [Günther et al. (2021) Sample use of Agents.jl](https://doi.org/10.3390/land10121366)
 
 ---
-**Ludmilla's track**
+**Ludmilla and Oskar's track**: [Coding the game of life](Projects/game-of-life/42_game_of_life.md)
 
----
-**Oskar's track**
+
 
 ----
 
