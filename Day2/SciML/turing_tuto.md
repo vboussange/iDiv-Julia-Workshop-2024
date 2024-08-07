@@ -277,21 +277,22 @@ plot_predictions_vi(q, sol, data_mat)
 using Lux
 using Random
 using ComponentArrays
+using Functors
 
 rng = Random.default_rng()
 
 rbf(x) = exp.(-(x.^2))
 nn_init = Lux.Chain(
-    Lux.Dense(2,5,rbf), Lux.Dense(5,5, rbf), Lux.Dense(5,5, rbf), Lux.Dense(5,2)
+    Lux.Dense(2,2)
 )
-p_nn, st_nn = Lux.setup(rng, nn_init)
+p_nn_init, st_nn = Lux.setup(rng, nn_init)
 
 nn = StatefulLuxLayer(nn_init, st_nn)
 
 # Define Lotka-Volterra model.
 function lotka_volterra_nn(du, u, p, t)
     # Model parameters.
-    @unpack α, β, γ, δ, p_nn = p
+    @unpack α, γ, p_nn = p
 
     # Current state.
     x, y = u
@@ -308,7 +309,7 @@ end
 
 # Define initial-value problem.
 u0 = [2.0, 2.0]
-p = ComponentArray(;α = 1.5, β = 1.0, γ = 3.0, δ = 1.0, p_nn)
+p = ComponentArray(;α = 1.5, γ = 3.0, p_nn=p_nn_init)
 # tspan = (hudson_bay_data[1,:t], hudson_bay_data[end,:t])
 tspan = (0., 5.)
 saveat = 0.1
@@ -326,20 +327,30 @@ plot(init_sol)
 alpha = 0.09
 sigma = sqrt(1.0 / alpha)
 
+function vector_to_parameters(ps_new::AbstractVector, ps::NamedTuple)
+    @assert length(ps_new) == Lux.parameterlength(ps)
+    i = 1
+    function get_ps(x)
+        z = reshape(view(ps_new, i:(i + length(x) - 1)), size(x))
+        i += length(x)
+        return z
+    end
+    return fmap(get_ps, ps)
+end
+
 @model function fitlv_nn(data, prob)
     # Prior distributions.
     σ ~ InverseGamma(3, 0.5)
     α ~ truncated(Normal(1.5, 0.5); lower=0.5, upper=2.5)
-    β ~ truncated(Normal(1.2, 0.5); lower=0, upper=2)
     γ ~ truncated(Normal(3.0, 0.5); lower=1, upper=4)
-    δ ~ truncated(Normal(1.0, 0.5); lower=0, upper=2)
 
-    nparameters = Lux.parameterlength(nn)
-    p_nn ~  MvNormal(zeros(nparameters), Diagonal(abs2.(sigma .* ones(nparameters))))
+    p_nn_vec ~ MvNormal(zeros(nparameters), σ^2 * I)
+
+    p_nn = vector_to_parameters(p_nn_vec, p_nn_init)
 
 
     # Simulate Lotka-Volterra model. 
-    p = ComponentArray(;α, β, γ, δ, p_nn)
+    p = ComponentArray(;α, γ, p_nn)
     predicted = solve(prob, alg; p, saveat)
 
     # Observations.
@@ -352,7 +363,7 @@ sigma = sqrt(1.0 / alpha)
     return nothing
 end
 
-model = fitlv_nn(data_mat, prob)
+model = fitlv_nn(data_mat, prob_nn)
 q0 = Variational.meanfield(model)
 advi = ADVI(10, 10_000)
 
@@ -362,8 +373,8 @@ function plot_predictions_vi_nn(q, sol, data_mat)
     myplot = plot(; legend=false)
     z = rand(q, 300)
     for parr in eachcol(z)
-        p[[:α, :β, :γ, :δ]] .= parr[2:5]
-        p[:p_nn] .= parr[6:end]
+        p[[:α, :δ]] .= parr[2:3]
+        p[:p_nn] .= parr[4:end]
         # p[:p_nn] .= 0.
         sol_p = solve(prob_nn, Tsit5(); u0, p, saveat)
         plot!(sol_p; alpha=0.1, color="#BBBBBB")
@@ -376,7 +387,7 @@ function plot_predictions_vi_nn(q, sol, data_mat)
 end
 
 myplot = plot_predictions_vi_nn(q, sol_true, data_mat)
-# plot!(myplot, yaxis=:log10)
+plot!(myplot, yaxis=:log10)
 
 
 function plot_func_resp(q, data)
@@ -425,6 +436,46 @@ function plot_func_resp(q, data)
 end
 
 plot_func_resp(q, data_mat)
+
+```
+
+
+
+## Machine learning approach
+
+```julia
+using SciMLSensitivity
+
+function loss(p)
+    predicted = solve(prob_nn, alg; p, saveat, abstol=1e-6, reltol = 1e-6, sensealg = ForwardDiffSensitivity())
+
+    l = 0.
+    for i in 1:length(predicted)
+        if all(predicted[i] .> 0)
+            l += sum((log.(data_mat[:, i]) - log.(predicted[i])).^2)
+        end
+    end
+
+    return l, predicted
+
+
+end
+
+losses = []
+callback = function (p, l, pred; doplot=true)
+    push!(losses, l)
+    if doplot
+        plt = scatter(sol_true.t, data_mat[1, :]; label = "data")
+        scatter!(plt, sol_true.t, pred[1, :]; label = "prediction")
+        display(plot(plt))
+    end
+    return false
+end
+
+pinit = ComponentArray(;α = 1., δ = 3.0, p_nn)
+
+
+callback(pinit, loss(pinit)...; doplot = true)
 
 ```
 
