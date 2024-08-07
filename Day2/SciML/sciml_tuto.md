@@ -145,7 +145,7 @@ pinit = ComponentArray(;α = 1., γ = 3.0, p_nn)
 callback(pinit, loss(pinit)...; doplot = true)
 ```
 
-
+Now let's perform the inference
 
 ```julia
 using Optimization
@@ -213,8 +213,12 @@ res_ada1 = Optimization.solve(optprob1, ADAM(0.1); callback = callback, maxiters
 optprob2 = Optimization.OptimizationProblem(optf, res_ada1.minimizer)
 res_ada2 = Optimization.solve(optprob2, ADAM(0.01); callback = callback, maxiters = 1000)
 
-final_sol = solve(prob_nn, alg; saveat, p=res_ada.minimizer)
-plot(final_sol)
+pred = solve(prob_nn, alg; saveat, p=res_ada2.minimizer)
+
+plt = scatter(sol_true.t, data_mat[1,:]; label = "data x", color = :blue, markerstrokewidth=0)
+        scatter!(plt, sol_true.t, Array(pred)[1,:]; label = "prediction x", color = :blue, markershape=:star5, markerstrokewidth=0)
+        scatter!(plt, sol_true.t, data_mat[2,:]; label = "data y", color = :red, markerstrokewidth=0)
+        scatter!(plt, sol_true.t, Array(pred)[2,:]; label = "prediction y", color = :red, markershape=:star5, markerstrokewidth=0)
 ```
 
 
@@ -258,7 +262,7 @@ function plot_func_resp(p, data)
 
 end
 
-plot_func_resp(res_ada.minimizer, data_mat)
+plot_func_resp(res_ada2.minimizer, data_mat)
 
 ```
 
