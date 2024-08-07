@@ -52,22 +52,22 @@ end
 
 # Define initial-value problem.
 u0 = [2.0, 2.0]
-p = (;α = 1.5, β = 1.0, γ = 3.0, δ = 1.0)
+p_true = (;α = 1.5, β = 1.0, γ = 3.0, δ = 1.0)
 # tspan = (hudson_bay_data[1,:t], hudson_bay_data[end,:t])
 tspan = (0., 5.)
 saveat = 0.1
 alg = Tsit5()
 
-prob = ODEProblem(lotka_volterra, u0, tspan, p)
+prob = ODEProblem(lotka_volterra, u0, tspan, p_true)
 
-sol = solve(prob, alg; saveat)
+sol_true = solve(prob, alg; saveat)
 # Plot simulation.
-plot(sol)
+plot(sol_true)
 
-data_mat = Array(sol) .* exp.(0.3 * randn(size(sol)))
+data_mat = Array(sol_true) .* exp.(0.3 * randn(size(sol_true)))
 # Plot simulation and noisy observations.
-plot(sol; alpha=0.3)
-scatter!(sol.t, data_mat'; color=[1 2], label="")
+plot(sol_true; alpha=0.3)
+scatter!(sol_true.t, data_mat'; color=[1 2], label="")
 ```
 
 ## Turing: Bayesian inference
@@ -244,7 +244,7 @@ The `NUTS` sampler uses automatic differentiation under the hood.
 - https://turinglang.org/docs/tutorials/09-variational-inference/
 
 ```julia
-using Flux
+import Flux
 using Turing: Variational
 model = fitlv2(data_mat, prob)
 q0 = Variational.meanfield(model)
@@ -269,6 +269,162 @@ function plot_predictions_vi(q, sol, data_mat)
 end
 
 plot_predictions_vi(q, sol, data_mat)
+
+```
+
+### Bayesian NN
+```julia
+using Lux
+using Random
+using ComponentArrays
+
+rng = Random.default_rng()
+
+rbf(x) = exp.(-(x.^2))
+nn_init = Lux.Chain(
+    Lux.Dense(2,5,rbf), Lux.Dense(5,5, rbf), Lux.Dense(5,5, rbf), Lux.Dense(5,2)
+)
+p_nn, st_nn = Lux.setup(rng, nn_init)
+
+nn = StatefulLuxLayer(nn_init, st_nn)
+
+# Define Lotka-Volterra model.
+function lotka_volterra_nn(du, u, p, t)
+    # Model parameters.
+    @unpack α, β, γ, δ, p_nn = p
+
+    # Current state.
+    x, y = u
+
+    û = nn(u, p_nn) # Network prediction
+
+
+    # Evaluate differential equations.
+    du[1] = (α - û[1]) * x # prey
+    du[2] = (û[2] - γ) * y # predator
+
+    return nothing
+end
+
+# Define initial-value problem.
+u0 = [2.0, 2.0]
+p = ComponentArray(;α = 1.5, β = 1.0, γ = 3.0, δ = 1.0, p_nn)
+# tspan = (hudson_bay_data[1,:t], hudson_bay_data[end,:t])
+tspan = (0., 5.)
+saveat = 0.1
+alg = Tsit5()
+
+prob_nn = ODEProblem(lotka_volterra_nn, u0, tspan, p)
+init_sol = solve(prob_nn, alg; saveat)
+# Plot simulation.
+plot(init_sol)
+
+
+# defining inference model
+
+# Create a regularization term and a Gaussian prior variance term.
+alpha = 0.09
+sigma = sqrt(1.0 / alpha)
+
+@model function fitlv_nn(data, prob)
+    # Prior distributions.
+    σ ~ InverseGamma(3, 0.5)
+    α ~ truncated(Normal(1.5, 0.5); lower=0.5, upper=2.5)
+    β ~ truncated(Normal(1.2, 0.5); lower=0, upper=2)
+    γ ~ truncated(Normal(3.0, 0.5); lower=1, upper=4)
+    δ ~ truncated(Normal(1.0, 0.5); lower=0, upper=2)
+
+    nparameters = Lux.parameterlength(nn)
+    p_nn ~  MvNormal(zeros(nparameters), Diagonal(abs2.(sigma .* ones(nparameters))))
+
+
+    # Simulate Lotka-Volterra model. 
+    p = ComponentArray(;α, β, γ, δ, p_nn)
+    predicted = solve(prob, alg; p, saveat)
+
+    # Observations.
+    for i in 1:length(predicted)
+        if all(predicted[i] .> 0)
+            data[:, i] ~ MvLogNormal(log.(predicted[i]), σ^2 * I)
+        end
+    end
+
+    return nothing
+end
+
+model = fitlv_nn(data_mat, prob)
+q0 = Variational.meanfield(model)
+advi = ADVI(10, 10_000)
+
+q = vi(model, advi, q0; optimizer=Flux.ADAM(1e-2))
+
+function plot_predictions_vi_nn(q, sol, data_mat)
+    myplot = plot(; legend=false)
+    z = rand(q, 300)
+    for parr in eachcol(z)
+        p[[:α, :β, :γ, :δ]] .= parr[2:5]
+        p[:p_nn] .= parr[6:end]
+        # p[:p_nn] .= 0.
+        sol_p = solve(prob_nn, Tsit5(); u0, p, saveat)
+        plot!(sol_p; alpha=0.1, color="#BBBBBB")
+    end
+
+    # Plot simulation and noisy observations.
+    plot!(myplot, sol; color=[1 2], linewidth=1)
+    scatter!(myplot, sol.t, data_mat'; color=[1 2])
+    return myplot
+end
+
+myplot = plot_predictions_vi_nn(q, sol_true, data_mat)
+# plot!(myplot, yaxis=:log10)
+
+
+function plot_func_resp(q, data)
+    # plotting prediction of functional response
+    u1 = range(minimum(data[1,:]), maximum(data[1,:]), length=100) 
+    u2 = range(minimum(data[2,:]), maximum(data[2,:]), length=100) 
+    u = hcat(u1,u2)
+
+    z = rand(q, 300)
+
+    myplot1 = plot(u2,
+                    p_true.β .* u2; 
+                    legend=false
+                    )
+    for parr in eachcol(z)
+        p[:p_nn] .= parr[6:end]
+        func_resp = nn(u', p.p_nn)
+        plot!(myplot1,
+                u2,
+                func_resp[1,:]; 
+                alpha=0.1, 
+                color="#BBBBBB"
+                )
+
+    end
+
+    myplot2 = plot(u1,
+                    p_true.δ .* u2; 
+                    legend=false
+                    )
+    for parr in eachcol(z)
+        p[:p_nn] .= parr[6:end]
+        func_resp = nn(u', p.p_nn)
+        plot!(myplot2,
+                u1,
+                func_resp[2,:]; 
+                alpha=0.1, 
+                color="#BBBBBB"
+                )
+
+    end
+    myplot = plot(myplot1, myplot2)
+
+    return myplot
+
+end
+
+plot_func_resp(q, data_mat)
 
 ```
 
