@@ -234,8 +234,44 @@ p = plot_predictions2(chain3, sol, data_mat)
 plot!(p, yaxis=:log10)
 ```
 
-
 ### Scaling to Large Models: Adjoint Sensitivities
+
+The `NUTS` sampler uses automatic differentiation under the hood. 
+
+- See https://arxiv.org/abs/2406.09699 for a complete treatment of AD.
+
+### Using Variational Inference
+- https://turinglang.org/docs/tutorials/09-variational-inference/
+
+```julia
+using Flux
+using Turing: Variational
+model = fitlv2(data_mat, prob)
+q0 = Variational.meanfield(model)
+advi = ADVI(10, 10_000)
+
+q = vi(model, advi, q0; optimizer=Flux.ADAM(1e-2))
+
+function plot_predictions_vi(q, sol, data_mat)
+    myplot = plot(; legend=false)
+    z = rand(q, 300)
+    for parr in eachcol(z)
+        p = NamedTuple([:α, :β, :γ, :δ] .=> parr[2:5])
+        u0 = parr[6:7]
+        sol_p = solve(prob, Tsit5(); u0, p, saveat)
+        plot!(sol_p; alpha=0.1, color="#BBBBBB")
+    end
+
+    # Plot simulation and noisy observations.
+    plot!(sol; color=[1 2], linewidth=1)
+    scatter!(sol.t, data_mat'; color=[1 2])
+    return myplot
+end
+
+plot_predictions_vi(q, sol, data_mat)
+
+```
 
 ### Resources
 - https://turinglang.org/docs/tutorials/10-bayesian-differential-equations/
+- 
