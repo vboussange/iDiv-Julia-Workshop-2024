@@ -61,7 +61,6 @@ using ComponentArrays
 
 rng = Random.default_rng()
 
-rbf(x) = exp.(-(x.^2))
 nn_init = Lux.Chain(
     Lux.Dense(2,2)
 )
@@ -168,7 +167,7 @@ res_lbfgs = Optimization.solve(optprob, LBFGS(); callback = callback, maxiters =
 
 ```julia
 
-TS = [1:25, 26:length(sol_true.t)]
+TS = [1:11,11:21,21:31,31:41,41:length(sol_true.t)]
 
 function loss_ms(p)
     l = 0.
@@ -208,17 +207,15 @@ adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x, p) -> loss_ms(x), adtype)
 
 
-optprob1 = Optimization.OptimizationProblem(optf, pinit)
-res_ada1 = Optimization.solve(optprob1, ADAM(0.1); callback = callback, maxiters = 1000)
-optprob2 = Optimization.OptimizationProblem(optf, res_ada1.minimizer)
-res_ada2 = Optimization.solve(optprob2, ADAM(0.01); callback = callback, maxiters = 1000)
+optprob = Optimization.OptimizationProblem(optf, pinit)
+@time res_ada = Optimization.solve(optprob1, ADAM(0.1); callback = callback, maxiters = 1000)
 
-pred = solve(prob_nn, alg; saveat, p=res_ada2.minimizer)
+pred = solve(prob_nn, alg; saveat, p=res_ada1.minimizer)
 
 plt = scatter(sol_true.t, data_mat[1,:]; label = "data x", color = :blue, markerstrokewidth=0)
-        scatter!(plt, sol_true.t, Array(pred)[1,:]; label = "prediction x", color = :blue, markershape=:star5, markerstrokewidth=0)
-        scatter!(plt, sol_true.t, data_mat[2,:]; label = "data y", color = :red, markerstrokewidth=0)
-        scatter!(plt, sol_true.t, Array(pred)[2,:]; label = "prediction y", color = :red, markershape=:star5, markerstrokewidth=0)
+scatter!(plt, sol_true.t, Array(pred)[1,:]; label = "prediction x", color = :blue, markershape=:star5, markerstrokewidth=0)
+scatter!(plt, sol_true.t, data_mat[2,:]; label = "data y", color = :red, markerstrokewidth=0)
+scatter!(plt, sol_true.t, Array(pred)[2,:]; label = "prediction y", color = :red, markershape=:star5, markerstrokewidth=0)
 ```
 
 

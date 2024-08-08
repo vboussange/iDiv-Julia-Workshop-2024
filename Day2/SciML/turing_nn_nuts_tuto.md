@@ -100,9 +100,9 @@ function lotka_volterra_nn(du, u, p, t)
 end
 
 # Define initial-value problem.
-p = ComponentArray(;α = 1.5, γ = 3.0, p_nn=p_nn_init)
+pinit = ComponentArray(;σ = 0.3, α = 1.5, γ = 3.0, p_nn=p_nn_init)
 
-prob_nn = ODEProblem(lotka_volterra_nn, u0, tspan, p)
+prob_nn = ODEProblem(lotka_volterra_nn, u0, tspan, pinit)
 init_sol = solve(prob_nn, alg; saveat)
 # Plot simulation.
 plot(init_sol)
@@ -138,20 +138,63 @@ end
 
     # Simulate Lotka-Volterra model. 
     p = (;α, γ, p_nn)
-    predicted = solve(prob, alg; p, saveat, abstol=1e-6, reltol=1e-6)
 
-    # Observations.
-    for i in 1:length(predicted)
-        if all(predicted[i] .> 0)
-            data[:, i] ~ MvLogNormal(log.(predicted[i]), σ^2 * I)
+    TS = [1:11,11:21,21:31,31:41,41:length(sol_true.t)]
+    for ts_idx in TS
+        saveat = sol_true.t[ts_idx]
+        u0 = sol_true.u[ts_idx[1]]
+        predicted = solve(prob_nn,
+                            alg; 
+                            tspan = (saveat[1], saveat[end]),
+                            u0,
+                            p, 
+                            saveat,
+                            abstol=1e-6, 
+                            reltol = 1e-6)
+
+
+        # Observations.
+        for i in 1:length(predicted)
+            if all(predicted[i] .> 0)
+                data[:, ts_idx[i]] ~ MvLogNormal(log.(predicted[i]), σ^2 * I)
+            end
         end
     end
 
     return nothing
 end
 
+
 model = fitlv_nn(data_mat, prob_nn)
-chain = sample(model, NUTS(), MCMCThreads(), 1000, 3; progress=true, init_params = [0.1, 1.5, 3.0, ComponentArray(p_nn_init)[:]])
+```
+
+### MLE
+```julia
+
+using Optimization, OptimizationOptimisers
+@time mle_res = maximum_likelihood(model, ADAM(0.1), maxiters=1000, initial_params=pinit)
+pmle = ComponentArray(;σ=0, pinit...)
+pmle .= mle_res.values[:]
+sol_mle = solve(prob_nn, alg;p=pmle, saveat)
+plot(sol_mle)
+scatter!(sol_true,  color = [:blue :red])
+```
+
+### MAP
+```julia
+map_res = maximum_a_posteriori(model)
+
+pmap = ComponentArray(;σ=0, pinit...)
+pmap .= map_res.values[:]
+
+sol_map = solve(prob_nn, alg;p=pmap, saveat)
+# Plot simulation.
+plot(sol_map)
+```
+
+### Full Bayesian estimation
+```julia
+chain = sample(model, NUTS(), MCMCThreads(), 1000, 3; progress=true)
 
 
 plot(chain)
