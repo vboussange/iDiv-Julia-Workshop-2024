@@ -24,10 +24,11 @@ Find the most important features determining Boston housing price.
 
 ## Advanced: creating a package
 - Create the package `MyPackage`.
-- Implement a `greeting` function, that throws `"greetings!"`
+- Implement a `greetings` function, that throws `"greetings!"`
 - Create a new environment, and add your local package to it
 - call `greetings` from this environment
   
+> hint: you should export your function `greetings` within your package, so that it is publicly available.
 
 ## Advanced 2: write tests
 - add a test folder to your package, and test that the function `greetings` returns `"greetings!"`
