@@ -1,18 +1,17 @@
 # Exercise: packages management
 
 
+## Adding packages to your base environment
+Install `BenchmarkTools` and `Test` to your base environment.
+
 ## Replicate an environment
-Your objective is to run the Julia script `Day1/22_pkg/housing/housing.jl`.
+Try to run the Julia script `Day1/22_pkg/housing/housing.jl`. Of course, you'll need to instantiate the dependencies!
 
-- `activate` the environment in `Day1/22_pkg_and_project_management/housing/`
-- `instantiate` 
-- run the script!
-
-## Adding a dependency
-As you understood it, the script performs a linear regression with the deep learning framework Flux.jl.
+## Adding a dependency to an environment
+As you understood it, `housing.jl` performs a linear regression with the deep learning framework Flux.jl.
 Because the model is linear, and the features are normalized, you can interpret the model's weights to investigate each feature importance.
 
-Your task is now to find the most important feature determining Boston housing price. 
+Find the most important features determining Boston housing price. 
 
 
 > **Hint 1**
@@ -22,3 +21,14 @@ Your task is now to find the most important feature determining Boston housing p
 
 
 > **Hint 3** `model.weight[:]` throws the weights of the linear layer.
+
+## Advanced: creating a package
+- Create the package `MyPackage`.
+- Implement a `greeting` function, that throws `"greetings!"`
+- Create a new environment, and add your local package to it
+- call `greetings` from this environment
+  
+
+## Advanced 2: write tests
+- add a test folder to your package, and test that the function `greetings` returns `"greetings!"`
+- run the test from the package manager
