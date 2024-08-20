@@ -82,7 +82,7 @@ ax.set_title("Iris traits")
 fig.savefig("iris.pdf", dpi=100)
 ```
 
-### Analyzing GBIF dataset using DataFrames, Broadcasting, and Data Visualization
+### Analyzing GBIF dataset using DataFrames, broadcasting, and data visualization
 
 First, let's load GBIF data. Use [GBIF2](https://github.com/rafaqz/GBIF2.jl).
 ```julia
@@ -99,13 +99,13 @@ println(names(df))
 println("Its size is ", size(df,1))
 ```
 
-Group occurrences by canton (`stateProvince`). Print all cantons where the birds where observed.
+Group occurrences by canton (`stateProvince`). Print all cantons where the birds were observed.
 ```julia
 dfg = groupby(df, "stateProvince")
 cantons = [df.stateProvince[1] for df in dfg]
 ```
 
- Which canton has the most number of occurence?
+Which canton has the most number of occurrence?
 
 
 ```julia
@@ -136,7 +136,6 @@ dropmissing!(df, [:decimalLongitude, :decimalLatitude])
 ```
 
 Normalize the `decimalLongitude` and `decimalLatitude`, so that it scales between 0 and 1.
-
 For this, construct a function `normalize`, that takes in a vector of floating points and a new normalized vector. This function should use the `.` operator.
 
 ```julia

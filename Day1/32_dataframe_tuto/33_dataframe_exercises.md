@@ -11,9 +11,7 @@ Download the "iris.csv" file from [here](https://raw.githubusercontent.com/uiuc-
 Load the data from the file into a `DataFrame` called `iris_df`.
 
 
-
 Print the entire DataFrame. 
-
 
 
 Print only the "species" column of the DataFrame. 
@@ -51,10 +49,16 @@ Add a title to the plot and label the x and y axes. Then, Save the plot to a pdf
 
 
 
-### Analyzing GBIF dataset using DataFrames, Broadcasting, and Data Visualization
+### Analyzing GBIF dataset using DataFrames, broadcasting, and data visualization
 
 First, let's load GBIF data. Use [GBIF2](https://github.com/rafaqz/GBIF2.jl).
+Use the following snippet
+```julia
+using GBIF2, DataFrames
 
+species_name = "Milvus milvus"
+df = occurrence_search(; limit=4000, country=:CH, year=(2000,2020)) |> DataFrame
+```
 
 
 What are the columns of this dataframe? How many rows does it have?
@@ -62,26 +66,18 @@ What are the columns of this dataframe? How many rows does it have?
 
 
 
-Group occurrences by canton (`stateProvince`). Print all cantons where the birds where observed.
+Group occurrences by canton (`stateProvince`). Print all cantons where the birds were observed.
 
 
 
- Which canton has the most number of occurence?
-
-
-
+Which canton has the most number of occurrence?
 
 
 
 Create a bar chart with `Plots.jl`, that shows the total number of observations for each canton
 
 
-
-
-
 Drop the rows where the `decimalLongitude` or `decimalLatitude` is `missing`
-
-
 
 
 Normalize the `decimalLongitude` and `decimalLatitude`, so that it scales between 0 and 1.
