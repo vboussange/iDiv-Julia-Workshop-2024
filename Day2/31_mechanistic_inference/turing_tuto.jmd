@@ -1,8 +1,8 @@
-# A primer on inference with differentiable process-based models in Julia
+# A primer on mechanistic inference with differentiable process-based models in Julia
 
-Here you will learn about different techniques to calibrate differential equations (or any type of differentiable process-based model) against data. We'll keep the best for the end, where we'll see how we can improve those models by parametrizing uncertain parts with neural networks.
+Here you will learn about different techniques to infer parameters of a (differentiable) process-based model against data. This is useful to in the context of mechanistic inference, where we want to explain patterns in a system by understanding the processes that generate them, in contrast to purely statistical or empirical inference, which might identify patterns or correlations in data without necessarily understanding the causes. We'll mostly focus on differential equation models. Make sure that you stick to the end, where we'll see how we can not only infer parameter values but also functional forms, by parametrizing models' components with neural networks.
 
-- [A primer on inference with differentiable process-based models in Julia](#a-primer-on-inference-with-differentiable-process-based-models-in-julia)
+- [A primer on mechanistic inference with differentiable process-based models in Julia](#a-primer-on-mechanistic-inference-with-differentiable-process-based-models-in-julia)
   - [Wait, what is a differentiable model?](#wait-what-is-a-differentiable-model)
   - [On the importance of gradients for inference](#on-the-importance-of-gradients-for-inference)
   - [Automatic differentiation](#automatic-differentiation)
@@ -64,8 +64,7 @@ y = mymodel(u0, p, tsteps)
 plot(tsteps, y)
 ```
 
-> Side Note: what is a `ComponentArray`?
-
+!!! note what is a `ComponentArray`?
 A `ComponentArray` is a convenient Array type that allows to access array elements with symbols, similarly to a `NamedTuple`, while behaving like a standard array. For instance, you could do something like
 
 ```julia
