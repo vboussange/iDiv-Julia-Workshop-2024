@@ -22,13 +22,15 @@ Here you will learn about different techniques to infer parameters of a (differe
 
 
 ## Wait, what is a differentiable model?
-One can usually write a model as a map $\mathcal{M}$ that maps some parameters $p$, an initial state $u_0$ and a time $t$ to a future state $u_t$
+One can usually write a model as a map $\mathcal{M}$ mapping some parameters $p$, an initial state $u_0$ and a time $t$ to a future state $u_t$
 
 $$u_t = \mathcal{M}(u_0, t, p).$$
 
 We call differentiable a model $\mathcal{M}$ for which we can calculate its derivative with respect to $p$ or $u_0$. The derivative $\frac{\partial \mathcal{M}}{\partial \theta}$ expresses how much the model output changes with respect to a small change in $\theta$.
 
-$$f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}$$
+> **Recall your Calculus class!**
+>
+> $$\frac{df}{dx}(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}$$
 
 Let's illustrate this concept with the [logistic equation model](https://www.google.com/search?client=safari&rls=en&q=verhulst+equation&ie=UTF-8&oe=UTF-8).
 
@@ -64,14 +66,15 @@ y = mymodel(u0, p, tsteps)
 plot(tsteps, y)
 ```
 
-!!! note what is a `ComponentArray`?
-A `ComponentArray` is a convenient Array type that allows to access array elements with symbols, similarly to a `NamedTuple`, while behaving like a standard array. For instance, you could do something like
+> **What is a `ComponentArray`?**
+> 
+> A `ComponentArray` is a convenient Array type that allows to access array elements with symbols, similarly to a `NamedTuple`, while behaving like a standard array. For instance, you could do something like
 
 ```julia
 cv = ComponentVector(;a = 1, b = 2)
 cv .= [3, 4]
 ```
-This is useful, because you cannot take a gradient w.r.t a `NamedTuple`, but you can with a `Vector`!
+> This is useful, because you can only calculate a gradient w.r.t a `Vector`!
 
 Now let's try to calculate the gradient of this model. While you could in this case derive the gradient analytically, an analytic derivation is generally tricky with complex models. And what about models that can only be simulated numerically, with no analytic expressions? We need to find a more automatized way to calculate gradients. 
 
