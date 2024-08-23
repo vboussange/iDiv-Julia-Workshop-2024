@@ -107,6 +107,7 @@ function agent_step!(tree::Tree, model::AgentBasedModel)
     # competition for space
     for competitor in nearby_agents(tree, model, tree.size)
         # check for overlapping trees and kill the smaller one
+        # (make sure both are still alive first to avoid errors)
         !(hasid(model, competitor) && hasid(model, tree)) && continue
         if competitor.size > tree.size
             @debug "Tree $(tree.id) died because of competition."

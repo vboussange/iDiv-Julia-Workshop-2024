@@ -17,18 +17,8 @@ A struct storing all species-specific variables.
     pathogen::Pathogen = Pathogen()
 end
 
-"""
-    Tree
-
-The core agent type of the model, a single tropical tree.
-"""
-@agent struct Tree(ContinuousAgent{2,Float64})
-    species::Species
-    age::Int
-    size::Int
-    mature::Bool
-    infected::Bool
-end
+#TODO use `@agent struct` to create a Tree type. This should extend ContinuousAgent
+# and have five fields: species, age, size, mature, infected.
 
 """
     vary(i, p)
@@ -47,20 +37,18 @@ function vary(i::Number; p::Int=50)
     return n
 end
 
-"""
-    createspecies(id)
 
-Create a new species. If settings["neutral"] is true, use the standard trait values, otherwise
-vary them to create unique traits.
-"""
-function createspecies(id::Int)
-    p = Pathogen(infection_radius=settings["transmission"])
-    s = Species(id=id, pathogen=p)
+#TODO write a function `createspecies()` that takes an integer variable `id` as input, and
+# does the following two things:
+#
+# (1) Create a Pathogen object `p` with an infection radius set by the "transmission" setting.
+# Then, create a species object `s` using the `id` variable passed to this function and
+# the previously created pathogen `p`.
+#
+# (2) If we're running a neutral simulation (see `settings`), return the object `s`.
+# Otherwise, create a new Species object, using the `vary()` function above to
+# randomly shift each parameter value compared to the default.
 
-    #TODO if we're running a neutral simulation (see `settings`), return the object `s`.
-    # Otherwise, create a new Species object, using the `vary()` function above to
-    # randomly shift each parameter value compared to the default.
-end
 
 """
     agent_step!(tree, model)

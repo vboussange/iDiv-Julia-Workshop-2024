@@ -19,10 +19,7 @@
 
 module jcm
 
-using Agents,
-    GLMakie,
-    Logging,
-    Random
+#TODO import the libraries Agents, GLMakie, Logging, and Random
 
 #TODO Once you have the model working, vary these parameters to see how it changes the model
 # behaviour (especially "pathogens", "transmission", and "neutral").
@@ -61,11 +58,14 @@ function initworld()
     
     # create all species and add one tree from each species to the model
     @debug "Adding species."
-    for s in 1:settings["species"]
-        sp = createspecies(s)
-        add_agent!(model, (0,0), sp, Int(round(sp.max_age/2)),
-                   sp.max_size, true, settings["pathogens"])
-    end
+
+    #TODO use the function `createspecies()` to create as many different species
+    # as configured in the "species" setting (use a loop for this).
+    #TODO add one individual of each species to the model, using the following code
+    # (where `sp` is the species in question):
+    # add_agent!(model, (0,0), sp, Int(round(sp.max_age/2)),
+    #            sp.max_size, true, settings["pathogens"])
+
     @info "Model initialised."
     return model
 end
@@ -77,6 +77,8 @@ Set up a model and launch an interactive window to run it.
 """
 function openapp()
     model = initworld()
+    #TODO change the graph of the infected trees so that it shows the percentage of trees
+    # that are infected rather than their absolute number.
     fig, abmobs = abmexploration(model;
                                  mlabels = ["Number of trees", "Infected trees", "Species"],
                                  mdata = [nagents, m->count(a->a.infected, allagents(m)),
