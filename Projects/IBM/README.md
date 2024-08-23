@@ -30,7 +30,8 @@ found at [https://github.com/veddox/jcm](https://github.com/veddox/jcm).*
    background of this project, and the structure and functioning of the IBM.
 
 2. Familiarise yourself with the Agents.jl 
-   [tutorial](https://juliadynamics.github.io/Agents.jl/stable/tutorial/).
+   [tutorial](https://juliadynamics.github.io/Agents.jl/stable/tutorial/) (online or under
+   `tutorial.jl` in this folder).
 
 3. Suggestion: work in groups of 2-3 - find your partner(s).
 
