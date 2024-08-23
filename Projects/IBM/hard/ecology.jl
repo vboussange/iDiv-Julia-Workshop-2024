@@ -76,9 +76,9 @@ for one tree in the model. This is the stepping function for Agents.jl.
 function agent_step!(tree::Tree, model::AgentBasedModel)
     # reproduction and dispersal
 
-    #TODO If the tree is mature, produce offspring according to its species `seed_production`.
-    # To do so, generate a random location and then use the following code:
-    # add_agent!(location, model, (0,0), tree.species, 0, 0, false, false)
+    #TODO If the tree is mature, produce offspring according to its species seed production.
+    # To do so, generate a random location within its dispersal distance and then use the
+    # following code: `add_agent!(location, model, (0,0), tree.species, 0, 0, false, false)`
 
     # competition for space
     for competitor in nearby_agents(tree, model, tree.size)
