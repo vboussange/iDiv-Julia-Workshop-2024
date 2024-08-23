@@ -5,88 +5,104 @@
 ### DataFrames and Plotting with the Iris dataset
 
 Download the "iris.csv" file from [here](https://raw.githubusercontent.com/uiuc-cse/data-fa14/gh-pages/data/iris.csv). Save it in a file `iris_data.csv`
+```julia
 
-
+```
 
 Load the data from the file into a `DataFrame` called `iris_df`.
+```julia
 
-
+```
 
 Print the entire DataFrame. 
+```julia
 
-
+```
 
 Print only the "species" column of the DataFrame. 
+```julia
 
+```
 
 
 Print the first 5 rows in the DataFrame.
+```julia
 
-
+```
 
 Print only the rows of the `DataFrame` where the "petal_length" is greater than 5. 
+```julia
 
-
-
+```
 
 Create a new `DataFrame`, which contains the mean and standard deviation of sepal length for each species
+```julia
 
-
+```
 
 
 Save the DataFrame to a new CSV file called "new_iris.csv".
+```julia
 
-
-
+```
 
 Provide statistics for the species `setosa`. You should create a new `DataFrame` called `iris_df_setosa` and use the `describe` function.
+```julia
 
-
+```
 
 Create a scatter plot of the `sepal_length` column on the x-axis and the `sepal_width` column on the y-axis. Each species should have a different color.
+```julia
 
-
+```
 
 Add a title to the plot and label the x and y axes. Then, Save the plot to a pdf file using the `savefig()` function.
+```julia
 
+```
 
-
-### Analyzing GBIF dataset using DataFrames, Broadcasting, and Data Visualization
+### Analyzing GBIF dataset using DataFrames, broadcasting, and data visualization
 
 First, let's load GBIF data. Use [GBIF2](https://github.com/rafaqz/GBIF2.jl).
+Use the following snippet
+```julia
+using GBIF2, DataFrames
 
+species_name = "Milvus milvus"
+df = occurrence_search(; limit=4000, country=:CH, year=(2000,2020)) |> DataFrame
+```
 
 
 What are the columns of this dataframe? How many rows does it have?
+```julia
 
+```
 
+Group occurrences by canton (`stateProvince`). Print all cantons where the birds were observed.
+```julia
 
+```
 
-Group occurrences by canton (`stateProvince`). Print all cantons where the birds where observed.
+Which canton has the most number of occurrence?
+```julia
 
-
-
- Which canton has the most number of occurence?
-
-
-
-
-
+```
 
 Create a bar chart with `Plots.jl`, that shows the total number of observations for each canton
+```julia
 
-
-
-
+```
 
 Drop the rows where the `decimalLongitude` or `decimalLatitude` is `missing`
+```julia
 
-
-
+```
 
 Normalize the `decimalLongitude` and `decimalLatitude`, so that it scales between 0 and 1.
-
 For this, construct a function `normalize`, that takes in a vector of floating points and a new normalized vector. This function should use the `.` operator.
+```julia
+
+```
 
 > 🥳 Congrats! You are done with this session of exercises.
 ## Solutions

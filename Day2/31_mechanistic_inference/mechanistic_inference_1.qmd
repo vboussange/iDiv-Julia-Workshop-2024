@@ -1,45 +1,44 @@
-# A primer on inference with differentiable process-based models in Julia
-
-Here you will learn about different techniques to calibrate differential equations (or any type of differentiable process-based model) against data. We'll keep the best for the end, where we'll see how we can improve those models by parametrizing uncertain parts with neural networks.
-
-- [A primer on inference with differentiable process-based models in Julia](#a-primer-on-inference-with-differentiable-process-based-models-in-julia)
-  - [Wait, what is a differentiable model?](#wait-what-is-a-differentiable-model)
-  - [On the importance of gradients for inference](#on-the-importance-of-gradients-for-inference)
-  - [Automatic differentiation](#automatic-differentiation)
-  - [Lotka-Volterra equations](#lotka-volterra-equations)
-  - [Machine learning approach](#machine-learning-approach)
-    - [Exercise: Hey, this is cheating!](#exercise-hey-this-is-cheating)
-  - [Sensitivity methods](#sensitivity-methods)
-  - [Turing: Bayesian inference](#turing-bayesian-inference)
-    - [Our first Turing model](#our-first-turing-model)
-    - [Data retrodiction](#data-retrodiction)
-    - [Exercise: Hey, this is cheating!](#exercise-hey-this-is-cheating-1)
-    - [Mode estimation](#mode-estimation)
-    - [Partially observed state](#partially-observed-state)
-    - [AD backends and `sensealg`](#ad-backends-and-sensealg)
-    - [Using Variational Inference](#using-variational-inference)
-    - [Summary of resources Resources](#summary-of-resources-resources)
+---
+title: "A primer on mechanistic inference with differentiable process-based models in Julia"
+jupyter: julia-1.10
+execute: 
+    eval: false
+showsol: true
+format:
+    html:
+        toc: true
+        toc-depth: 4
+        # toc-expand: 2
+editor:
+  render-on-save: true
+---
 
 
+Here you will learn about different techniques to infer parameters of a (differentiable) process-based model against data. This is useful to in the context of mechanistic inference, where we want to explain patterns in a system by understanding the processes that generate them, in contrast to purely statistical or empirical inference, which might identify patterns or correlations in data without necessarily understanding the causes. We'll mostly focus on differential equation models. Make sure that you stick to the end, where we'll see how we can not only infer parameter values but also functional forms, by parametrizing models' components with neural networks.
+
+# Preliminaries
 ## Wait, what is a differentiable model?
-One can usually write a model as a map $\mathcal{M}$ that maps some parameters $p$, an initial state $u_0$ and a time $t$ to a future state $u_t$
+One can usually write a model as a map $\mathcal{M}$ mapping some parameters $p$, an initial state $u_0$ and a time $t$ to a future state $u_t$
 
 $$u_t = \mathcal{M}(u_0, t, p).$$
 
-We call differentiable a model $\mathcal{M}$ for which we can calculate its derivative with respect to $p$ or $u_0$. The derivative $\frac{\partial \mathcal{M}}{\partial \theta}$ expresses how much the model output changes with respect to a small change in $\theta$.
+We call **differentiable** a model $\mathcal{M}$ for which we can calculate its derivative with respect to $p$ or $u_0$. The derivative $\frac{\partial \mathcal{M}}{\partial \theta}$ expresses how much the model output changes with respect to a small change in $\theta$.
 
-$$f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}$$
+::: {.callout-note}
 
-Let's illustrate this concept with the [logistic equation model](https://www.google.com/search?client=safari&rls=en&q=verhulst+equation&ie=UTF-8&oe=UTF-8).
+# Recall your Calculus class!
 
-Consider the logistic growth model, which has an analytic solution given by:
+$$\frac{df}{dx}(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}$$
+:::
 
-$\mathcal{M}(u_0, p, t) = \frac{u_0}{\exp(-r \cdot (t - t_0)) + b \cdot u_0 \cdot (1 - \exp(-r \cdot (t - t_0)))}
-$
+Let's illustrate this concept with the [logistic equation model](https://en.wikipedia.org/wiki/Logistic_function#In_ecology:_modeling_population_growth).
+This model has an analytic formulation given by:
+
+$$\mathcal{M}(u_0, p, t) = \frac{K}{1 + \big( \frac{K-u_0}{u_0} \big) e^{rt}}$$
 
 Let's code it
 
-```julia
+```{julia}
 using UnPack
 using Plots
 using Random
@@ -49,45 +48,66 @@ Random.seed!(0)
 
 function mymodel(u0, p, t)
     T = eltype(u0)
-    @unpack r, b = p
-    t0 = 0.
+    @unpack r, K = p
 
-    @. u0 / (exp(-r * (t - t0)) + b * u0 * (one(T) - exp(-r * (t - t0))))
+    @. K / (one(T) + (K - u0) / u0 * exp(-r * t))
 end
 
-p = ComponentArray(;r = rand(), b = rand())
-u0 = rand()
+p = ComponentArray(;r = 1., K = 1.)
+u0 = 0.005
 
-tsteps = range(0, 30, length=100)
+tsteps = range(0, 20, length=100)
 y = mymodel(u0, p, tsteps)
 
 plot(tsteps, y)
 ```
 
-> Side Note: what is a `ComponentArray`?
+::: {.callout-note}
 
+# What is a `ComponentArray`?
 A `ComponentArray` is a convenient Array type that allows to access array elements with symbols, similarly to a `NamedTuple`, while behaving like a standard array. For instance, you could do something like
 
-```julia
+```{julia}
 cv = ComponentVector(;a = 1, b = 2)
 cv .= [3, 4]
 ```
-This is useful, because you cannot take a gradient w.r.t a `NamedTuple`, but you can with a `Vector`!
+This is useful, because you can only calculate a gradient w.r.t a `Vector`!
+
+:::
+
 
 Now let's try to calculate the gradient of this model. While you could in this case derive the gradient analytically, an analytic derivation is generally tricky with complex models. And what about models that can only be simulated numerically, with no analytic expressions? We need to find a more automatized way to calculate gradients. 
 
 How about [the finite difference method](https://en.wikipedia.org/wiki/Finite_difference_method)?
 
-```julia
-function ∂mymodel_∂p(h, u0, p, t)
-    phat = (; r = p.r, b= p.b + h)
+
+
+
+::: {.callout-tip icon=false}
+# Exercise
+
+Implement the function `∂mymodel_∂K(h, u0, p, t)` which returns the model's derivative with respect to `K`, calculated with a small `h` to be provided by the user.
+
+::: {.content-hidden unless-meta="showsol"}
+```{julia}
+function ∂mymodel_∂K(h, u0, p, t)
+    phat = (; r = p.r, K= p.K + h)
     return (mymodel(u0, phat, t) - mymodel(u0, p, t)) / h
 end
 
 ∂mymodel_∂p(1e-1, u0, p, 1.)
 ```
+:::
 
-The gradient of the model is useful to understand how a parameter influences the output of the model. Let's calculate the important of the carrying capacity `b` on the model output:
+::: {.content-visible unless-meta="showsol"}
+```{julia}
+#...
+```
+:::
+
+:::
+
+The gradient of the model is useful to understand how a parameter influences the output of the model. Let's calculate the importance of the carrying capacity `K` on the model output:
 
 ```julia
 dm_dp = ∂mymodel_∂p(1e-1, u0, p, tsteps)
@@ -98,42 +118,52 @@ As you can observe, the carrying capacity has no effect at small $t$ where popul
 
 ## On the importance of gradients for inference
 
-The ability to calculate the derivative of a model is crucial when it comes to inference. Both within a full Bayesian inference context, where one wants to calculate the posterior distribution of parameters $\theta$ given data $u$, $p(\theta| u)$, or when one wants to obtain a point estimate $\theta^\star = \argmax_\theta (p(\theta | u))$, this quantity is required.
+The ability to calculate the derivative of a model is crucial when it comes to inference. Both within a full Bayesian inference context, where one wants to sample the posterior distribution of parameters $\theta$ given data $u$, $p(\theta| u)$, or when one wants to obtain a point estimate $\theta^\star = \argmax_\theta (p(\theta | u))$ (frequentist or machine learning context), the model gradient proves very useful. In a full Bayesian inference context, they are used e.g. with Hamiltonian Markov Chains methods, such as the NUTS sampler, and in a machine learning context, they are used with gradient-based optimizer.
 
-Given an intial estimate, this gradient is used to suggest a new, better estimate.
+
+### Gradient descent
+The best way to grasp the importance of gradients in inference is to understand the [gradient descent algorithm](https://en.wikipedia.org/wiki/Gradient_descent).
+
+
+The following picture illustrates the algorithm in the special case where $p$ is one-dimensional.
 
 ![](https://editor.analyticsvidhya.com/uploads/631731_P7z2BKhd0R-9uyn9ThDasA.png)
 
-Gradient-based methods are usually very efficient in high-dimensional spaces. This is true in a Bayesian inference context with Hamiltonian Markov Chains, such as the NUTS sampler, or in a frequentist or machine learning, with gradient-based optimizer.
+Given an initial estimate of the parameter value $p_0$, $\frac{d \mathcal{M}}{dp}$ is used to suggest a new, better estimate, following
+
+$$p_{n+1} = p_n - \eta \frac{d \mathcal{M}}{dp}(u_0, t, p) $$
+
+where $\eta$ is the learning rate.
+
+Gradient-based methods are usually very efficient in high-dimensional spaces. 
 
 ## Automatic differentiation
+Let's go back to our method `∂mymodel_∂p`.
+What is the optimal value of `h` to calculate the derivative? This is a tricky question, because a too small `h` can lead to round off errors ([see more explanations here](https://book.sciml.ai/notes/08-Forward-Mode_Automatic_Differentiation_(AD)_via_High_Dimensional_Algebras/)) while `h` too large also leads to a bad approximation of the asymptotic definition.
 
-But how do we choose `h` to calculate the derivative? This is a tricky question, because a too small `h` can lead to round off errors ([see more explanations here](https://book.sciml.ai/notes/08-Forward-Mode_Automatic_Differentiation_(AD)_via_High_Dimensional_Algebras/)) while `h` too large also leads to a bad approximation of the asymptotic definition.
+<!-- Also, can you calculate how many evaluations of the model do you need if your parameter is $d$ dimensionsal?
+$\mathcal{O}(2 d)$ -->
 
-Also, can you calculate how many evaluations of the model do you need if your parameter is $d$ dimensionsal?
+Fortunately, a bunch of techniques referred to as [**automatic differentiation**](https://en.wikipedia.org/wiki/Automatic_differentiation) (AD) allows to **exactly** differentiate any piece of numerical functions. In practice, your code must be exclusively written within an AD-backend, such as Torch, JAX or Tensorflow. Those libraries do not know how to differentiate code not written in their own language, such as normal Python code.
 
-$\mathcal{O}(2 d)$
+Fortunately, Julia is an *AD-pervasive language*! This means that any piece of Julia code is theoretically differentiable with AD.
 
-Fortunately, Julia is an *AD-pervasive language*! This means that you can **exactly** differentiate any piece of function written in Julia, at low cost.
-
-```julia
+```{julia}
 using ForwardDiff
 
 @btime ForwardDiff.gradient(p -> mymodel(u0, p, 1.), p)
 ```
 
-This is what makes Julia great for model calibration and inference! Write your model in Julia, and any inference method using AD will be able to work with your model! This is not the case in Python or R, where you need to write your model in a machine learning framework such as Torch, JAX or Tensorflow, because those libraries do not know how to differentiate code not written in their own language.
+This is what makes Julia great for model calibration and inference! Write your model in Julia, and any inference method using AD will be able to work with your model!
 
-To learn more about AD in Julia, check-out this [cool blog-post](https://gdalle.github.io/AutodiffTutorial/) and [a short presentation](https://gdalle.github.io/JuliaCon2024-AutoDiff/#/title-slide).
+To learn more about AD in Julia, check-out this [cool blog-post](https://gdalle.github.io/AutodiffTutorial/) and [this short presentation](https://gdalle.github.io/JuliaCon2024-AutoDiff/#/title-slide).
 
 Now let's get started with inference.
 
+# Mechanistic inference
 
-## Lotka-Volterra equations
-
-We'll use a simple dynamical community model, the [Lotka Volterra](https://en.wikipedia.org/wiki/Lotka–Volterra_equations) model, to generate the data. We'll then contaminate this data with noise, and assume that we do not know the exact parameters that have generated this data. 
-
-The goal of the session will be to estimate those parameters from the data, using a bunch of different techniques. 
+## The mechanistic model and the data
+We'll use a simple dynamical community model, the [Lotka Volterra](https://en.wikipedia.org/wiki/Lotka–Volterra_equations) model, to generate data. We'll then contaminate this data with noise, and try to recover the parameters that have generated the data. The goal of the session will be to estimate those parameters from the data, using a bunch of different techniques. 
 
 So let's first generate the data.
 
@@ -169,20 +199,39 @@ sol_true = solve(prob, alg; saveat)
 plot(sol_true)
 ```
 
-This is the true state of the system. Now let's contaminate it with observational noise. We'll add lognormally distributed noise, because we are observing population abundance which can only be positive.
+This is the true state of the system. Now let's contaminate it with observational noise. 
 
-```julia
+
+:::::: {.callout-tip icon="false"}
+
+# Exercise: contaminate data with noise
+
+Create a `data_mat` array, which consists of the ODE solution contaminated with a lognormally-distributed noise with standard deviation `0.3`. 
+
+::: {.callout-note}
+Note that we add lognormally-distributed noise instead of normally-distributed because we are observing population abundance, which can only be positive.
+:::
+
+::: {.content-hidden unless-meta="showsol"}
+```{julia}
 data_mat = Array(sol_true) .* exp.(0.3 * randn(size(sol_true)))
 # Plot simulation and noisy observations.
 plot(sol_true; alpha=0.3)
 scatter!(sol_true.t, data_mat'; color=[1 2], label="")
 ```
+:::
+
+::: {.content-visible unless-meta="showsol"}
+```{julia}
+# data_mat = ...
+```
+:::
+:::
 
 Now that we have our data, let's do some inference!
 
-
-## Machine learning approach
-We'll get started with a very crude approach to inference, where we'll treat the calibration of our LV model similarly to a supervised machine learning task. To do so, we'll define a loss function, defining a distance between our model and the data, and we'll try to minimize this loss.
+## Mechanistic inference as a supervised learning task
+We'll get started with a very crude approach to inference, where we'll treat the calibration of our LV model similarly to a supervised machine learning task. To do so, we'll write a loss function, defining a distance between our model and the data, and we'll try to minimize this loss. The parameter minimizing this loss will be our best model parameter estimate.
 
 ```julia
 function loss(p)
@@ -199,23 +248,17 @@ function loss(p)
             l += sum(abs2, log.(data_mat[:, i]) - log.(predicted[i]))
         end
     end
-
     return l, predicted
-
-
 end
 ```
 
-We'll define an initial estimate for the parameters, and we'll use a gradient-based optimizer that will iteratively update the parameters so as to minimize the loss, following a gradient descent approach
-
-$$\theta_n = \theta_{n-1} + \eta \nabla L(\theta_n)$$
-
-Where $\eta$ is the learning rate.
+::: {.callout-note}
+Notice that we explicitly check whether predictions are > 0, because the log of negative number is not defined and will throw an error! 
+:::
 
 Let's define a helper function, that will plot how good does the model perform across different iterations.
 
 ```julia
-
 losses = []
 callback = function (p, l, pred; doplot=true)
     push!(losses, l)
@@ -227,23 +270,22 @@ callback = function (p, l, pred; doplot=true)
         scatter!(plt, sol_true.t, Array(pred)[1,:]; label = "prediction x", color = :blue, markershape=:star5, markerstrokewidth=0)
         scatter!(plt, sol_true.t, data_mat[2,:]; label = "data y", color = :red, markerstrokewidth=0)
         scatter!(plt, sol_true.t, Array(pred)[2,:]; label = "prediction y", color = :red, markershape=:star5, markerstrokewidth=0)
-
         display(plot(plt, yaxis = :log10))
     end
     return false
 end
 
 ```
-And let's define a wrong initial guess
+And let's define a wrong initial guess for the parameters
 
 ```julia
 pinit = ComponentArray(;α = 1., β = 1.5, γ = 1.0, δ = 0.5)
 
 callback(pinit, loss(pinit)...; doplot = true)
 ```
-It's bad but that's what we want!
+Our initial predictions are bad, but you'll likely get even worse predictions in a real-case scenario!
 
-We'll use the library `Optimization` which is a wrapper library around many optimization libraries in Julia, providing you with many different types of optimizers. We'll use the infamous [ADAM optimizer](https://arxiv.org/abs/1412.6980) (187k citations!!!), widely used in ML.
+We'll use the library `Optimization`, which is a wrapper library around many optimization libraries in Julia providing you with many different types of optimizers, to find parameters minimizing `loss`. We'll specifically use the infamous [Adam optimizer](https://arxiv.org/abs/1412.6980) (187k citations!!!), widely used in ML.
 
 ```julia
 using Optimization
@@ -260,13 +302,16 @@ res_ada.minimizer
 
 Nice! It seems that the optimizer did a reasonable job, and that we found a reasonable estimate of our parameters!
 
-### Exercise: Hey, this is cheating!
+
+::: {.callout-tip icon="false"}
+# Exercise: Hey, this is cheating!
 
 Notice that we use the true `u0`, as if we were to know exactly the initial state. In a real situation, we need also to infer the true state!
 
 Can you modify the model to infer the true state?
 
-```julia
+::: {.content-hidden unless-meta="showsol"}
+```{julia}
 function loss2(p)
     predicted = solve(prob,
                         alg; 
@@ -294,15 +339,46 @@ optprob = Optimization.OptimizationProblem(optf, pinit)
 
 @time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 1000)
 res_ada.minimizer
-
 ```
+:::
+::: {.content-visible unless-meta="showsol"}
+```{julia}
+# function loss2(p)
+#    ...
+# end
+# losses = []
+
+# pinit = ...
+
+# adtype = Optimization.AutoZygote()
+# optf = Optimization.OptimizationFunction((x, p) -> loss2(x), adtype)
+# optprob = Optimization.OptimizationProblem(optf, pinit)
+
+# @time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 1000)
+# res_ada.minimizer
+```
+:::
+:::
+
 
 ## Sensitivity methods
-What's `SciMLSensitivity`? and `adtype = Optimization.AutoZygote()`? Well, AD comes in different flavours, with broadly two types of AD - forward mode and backward mode -, and a bunch of different implementations. You can specify which ones to use with `adtype`, see available options [here](https://docs.sciml.ai/Optimization/stable/API/ad/). But when it comes to differentiating the `solve` function, you want to use `AutoZygote()`, because when trying to differentiate `solve`, the `Zygote` a specific adjoint rule provided by the `SciMLSensitivity` package will be used. These adjoint rules can be specificed by the keyword `sensealg` when calling `solve` and are designed for best performance when differentiating numerical solutions to ODEs. There exist a lot of them (see a review [here](https://arxiv.org/abs/2406.09699)), and if `sensealg` is not provided, a smart polyalgorithm is going to pick up one for you.
+Did you wonder why do we need to load `SciMLSensitivity`? and why did we specify `adtype = Optimization.AutoZygote()`? 
 
-See [here](https://docs.sciml.ai/SciMLSensitivity/stable/manual/differential_equation_sensitivities/) for how to choose an algorithm, and let's evaluate the performance of two here for the specificity of our problem
+AD comes in different flavours, with broadly two types of AD methods - **forward methods** and **backward methods** -, and a bunch of different implementations. 
 
-```julia
+You can specify which ones `Optimization.jl` will use to differentiate `loss` with `adtype`, see available options [here](https://docs.sciml.ai/Optimization/stable/API/ad/). 
+
+But when it comes to differentiating the `solve` function from `OrdinaryDiffEq`, you want to use `AutoZygote()`, because when trying to differentiate `solve`, a specific adjoint rule provided by the `SciMLSensitivity` package will be used. These adjoint rules can be specificed by the keyword `sensealg` when calling `solve` and are designed for best performance when differentiating numerical solutions to ODEs. There exist a lot of them (see a review [here](https://arxiv.org/abs/2406.09699)), and if `sensealg` is not provided, a smart polyalgorithm is going to pick up one for you.
+
+You can have a look in the documentation [here](https://docs.sciml.ai/SciMLSensitivity/stable/manual/differential_equation_sensitivities/) for hints on how to choose an algorithm. 
+
+::: {.callout-tip icon="false"}
+# Exercise: benchmarking sensitivity methods
+
+Can you evaluate the performance of `ForwardDiffSensitivity()` and `ReverseDiffAdjoint()`?
+
+::: {.content-hidden unless-meta="showsol"}
+```{julia}
 using Zygote
 function loss_sensealg(p, sensealg)
     predicted = solve(prob,
@@ -322,32 +398,40 @@ function loss_sensealg(p, sensealg)
     end
     return l
 end
-
+```
+```{julia}
 @btime Zygote.gradient(p -> loss_sensealg(p, ForwardDiffSensitivity()), pinit)
 ```
 
-```julia
+```{julia}
 @btime Zygote.gradient(p -> loss_sensealg(p, ReverseDiffAdjoint()), pinit)
 ```
+:::
+::: {.content-visible unless-meta="showsol"}
+```{julia}
+#...
+```
+:::
+
 For a small number of parameters, forward methods tend to perform best, but with higher number of parameters, the other way around is true.
 
+:::
 
-## Turing: Bayesian inference
+Well done! Now, let's jump into the Bayesian world...
 
-We'll first start by using the gold standard for inference: Bayesian inference. Julia has a very strong library for Bayesian inference: [Turing.jl](https://turinglang.org).
+## Bayesian inference
+
+Julia has a very strong library for Bayesian inference: [Turing.jl](https://turinglang.org).
 
 Let's declare our first Turing model!
 
-Turing makes heavy use of macros, which allows the library to automatically construct the posterior distribution. Essentially, when defining a model, you need to append the macro `@model`, which will permit Turing.jl to adequately treat the random variables, defined with the `~` symbol.
-
+This is done with the `@model` macro, which allows the library to automatically construct the posterior distribution based on the definition of your model's random variables, assigned with the `~` symbol.
 
 ### Our first Turing model
 
 ```julia
 using Turing
 using LinearAlgebra
-
-# data_mat = hudson_bay_data[:, [:hare, :lynx]] |> Matrix
 
 @model function fitlv(data, prob)
     # Prior distributions.
@@ -382,9 +466,12 @@ model = fitlv(data_mat, prob)
 chain = sample(model, NUTS(), MCMCThreads(), 1000, 3; progress=true)
 
 ```
+::: {.callout-note}
+# Threads
 
-> ! Threads
-> How many threads do you have running? `Threads.nthreads()` will tell you!
+How many threads do you have running? `Threads.nthreads()` will tell you!
+:::
+
 
 Let's see if our chains have converged.
 
@@ -392,7 +479,7 @@ Let's see if our chains have converged.
 using StatsPlots
 plot(chain)
 ```
-
+<!-- VICTOR, you stopped here -->
 ### Data retrodiction
 
 Let's now generate simulated data using samples from the posterior distribution, and compare to the original data.
