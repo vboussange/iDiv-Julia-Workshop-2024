@@ -2,28 +2,33 @@
 #### Janzen-Connell Model
 ####
 #### A simple forest ecosystem model to investigate the effect of pathogen-induced
-#### density-dependent mortality on tree diversity. This file uses the Agents.jl
-#### library. For a pure Julia implementation, see the folder `original`.
+#### density-dependent mortality on tree diversity.
+####
 ####
 #### (c) 2024 Daniel Vedder <daniel.vedder@idiv.de>
+####     Originally published at https://github.com/veddox/jcm
 ####     Licensed under the terms of the MIT license.
 ####
 
+### INSTRUCTIONS
+###
+### This file is intended for the IBM course project. Copy it and the associated file
+### `ecology.jl` to another location and edit it there. Complete all `TODO` statements
+### to get a working model. XXX denotes comments that may be interesting or helpful.
+
+
 module jcm
 
-const jcm_version = v"2.0"
-
 using Agents,
-    CairoMakie,
     GLMakie,
     Logging,
     Random
 
+#XXX Once you have the model working, vary these parameters to see how it changes the model
+# behaviour (especially "pathogens", "transmission", and "neutral").
 const settings = Dict("species" => 16,              # The number of species that will be created
                       "worldsize" => 1000,          # The length and breadth of the world in m
                       "runtime" => 1000,            # The number of updates the simulation will run
-                      "datafile" => "jcm_data.csv", # The name of the recorded data file
-                      "datafreq" => 50,             # How long between data recordings?
                       "pathogens" => true,          # Include pathogens in the simulation?
                       "transmission" => 40,         # Pathogen infection radius
                       "neutral" => false,           # All species have identical trait values?
@@ -48,36 +53,21 @@ function initworld()
     global_logger(ConsoleLogger(stdout, settings["verbosity"]))
     # create the space and model object
     @debug "Creating model objects."
-    space = ContinuousSpace((settings["worldsize"], settings["worldsize"]))
-    model = StandardABM(Tree, space; agent_step!, rng)
+    
+    #TODO create a square continuous space object of width `worldsize` called `space`
+    #TODO create a standard ABM object called `model` that has Tree as its agent type,
+    # and uses the space variable defined above, the agent_step! function, and the
+    # previously defined RNG
+    
     # create all species and add one tree from each species to the model
     @debug "Adding species."
     for s in 1:settings["species"]
         sp = createspecies(s)
-        add_agent!(model, (0,0), sp, Int(round(sp.max_age/2)), sp.max_size, true,
-                   settings["pathogens"])
+        add_agent!(model, (0,0), sp, Int(round(sp.max_age/2)),
+                   sp.max_size, true, settings["pathogens"])
     end
     @info "Model initialised."
     return model
-end
-
-"""
-    runmodel()
-
-Set up, run, and visualise the model.
-"""
-function runmodel()
-    model = initworld()
-    @time run!(model, settings["runtime"])
-    CairoMakie.activate!()
-    abmvideo(
-        "janzen-connell.mp4", model;
-        agent_marker = a -> a.infected ? :diamond : :circle,
-        agent_color = a -> a.species.id,
-        framerate = 20, frames = 150,
-        title = "Janzen-Connell Model"
-    )
-    @info "Ran and visualised model."
 end
 
 """
@@ -92,7 +82,6 @@ function openapp()
                                  mdata = [nagents, m->count(a->a.infected, allagents(m)),
                                           m->length(unique(map(a->a.species.id, allagents(m))))],
                                  agent_marker = a -> a.infected ? :diamond : :circle,
-                                 #agent_size = a -> a.size, #FIXME gives an error for some reason
                                  agent_color = a -> a.species.id)
     @info "Created interface."
     return fig

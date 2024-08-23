@@ -3,16 +3,8 @@
 ### (c) Daniel Vedder, MIT license
 ###
 
-"""
-    Pathogen
-
-A struct storing the variables for a species-specific pathogen.
-"""
-@kwdef struct Pathogen
-    infection_rate::Float64 = 0.8
-    infection_radius::Int = 0
-    lethality::Float64 = 0.05
-end
+#TODO use `@kwdef struct` to create a `Pathogen` type that stores the parameters
+# relating to pathogens (see `Species` below for a template).
 
 """
     Species
@@ -21,12 +13,7 @@ A struct storing all species-specific variables.
 """
 @kwdef struct Species
     id::Int
-    max_age::Int = 150
-    max_size::Int = 25
-    growth_rate::Int = 2
-    seed_production::Int = 10
-    dispersal_distance::Int = 200
-    pathogen_resistance::Float64 = 0
+    #TODO add all species-specific parameters here with their default values
     pathogen::Pathogen = Pathogen()
 end
 
@@ -69,18 +56,10 @@ vary them to create unique traits.
 function createspecies(id::Int)
     p = Pathogen(infection_radius=settings["transmission"])
     s = Species(id=id, pathogen=p)
-    if settings["neutral"]
-        return s
-    else
-        max_age = vary(s.max_age)
-        max_size = vary(s.max_size)
-        growth_rate = vary(s.growth_rate)
-        seed_production = vary(s.seed_production)
-        dispersal_distance = vary(s.dispersal_distance)
-        pathogen_resistance = vary(s.pathogen_resistance)
-        return Species(id, max_age, max_size, growth_rate, seed_production,
-                       dispersal_distance, pathogen_resistance, p)
-    end
+
+    #TODO if we're running a neutral simulation (see `settings`), return the object `s`.
+    # Otherwise, create a new Species object, using the `vary()` function above to
+    # randomly shift each parameter value compared to the default.
 end
 
 """
@@ -108,38 +87,23 @@ function agent_step!(tree::Tree, model::AgentBasedModel)
     for competitor in nearby_agents(tree, model, tree.size)
         # check for overlapping trees and kill the smaller one
         !(hasid(model, competitor) && hasid(model, tree)) && continue
-        if competitor.size > tree.size
-            @debug "Tree $(tree.id) died because of competition."
-            remove_agent!(tree, model)
-            return
-        else
-            @debug "Tree $(competitor.id) died because of competition."
-            remove_agent!(competitor, model)
-        end
+
+        #TODO check whether the tree or its competitor is larger and kill the smaller one.
+        # Print a debug message to say that it died because of competition.
     end
     # infection dynamics
-    if tree.infected
-        pathogen = tree.species.pathogen
-        for neighbour in nearby_agents(tree, model, pathogen.infection_radius)
-            # infect nearby conspecifics with a certain probability
-            if neighbour.species.id == tree.species.id && pathogen.infection_rate > rand(Float64)
-                neighbour.infected = true
-            end
-        end
-        if pathogen.lethality > rand(Float64)
-            @debug "Tree $(tree.id) died because of disease."
-            remove_agent!(tree, model)
-            return
-        end
-    end
+
+    #TODO If the tree is infected, do two things:
+    # (1) Check for conspecific neighbours within the infection radius of the pathogen.
+    #     If the pathogen's infection rate is larger than a random number (use `rand(Float64)`
+    #     to get this, infect the neighbour.
+    # (2) If the pathogen's lethality is larger than a random number, remove the tree from
+    #     the model and print a debug message saying that it died because of disease.
+
     # growth and aging
-    if !tree.mature
-        tree.size += tree.species.growth_rate
-        tree.size >= tree.species.max_size && (tree.mature = true)
-    elseif tree.age >= tree.species.max_age
-        @debug "Tree $(tree.id) died because of old age."
-        remove_agent!(tree, model)
-        return
-    end
-    tree.age += 1
+
+    #TODO if the tree is not yet mature, increase its size by its species-specific growth rate.
+    # Once it reaches its maximum size, set its maturity to true. If the tree exceeds its maximum
+    # age, remove it from the model and print a debug statement to say that the tree died
+    # of old age. Finally, increment the tree's age by 1.
 end
