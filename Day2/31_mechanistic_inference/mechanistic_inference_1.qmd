@@ -3,12 +3,13 @@ title: "A primer on mechanistic inference with differentiable process-based mode
 jupyter: julia-1.10
 execute: 
     eval: false
-showsol: true
+showsol: false
 format:
     html:
         toc: true
         toc-depth: 4
         # toc-expand: 2
+    ipynb: default
 editor:
   render-on-save: true
 ---
@@ -84,9 +85,12 @@ How about [the finite difference method](https://en.wikipedia.org/wiki/Finite_di
 
 
 ::: {.callout-tip icon=false}
-# Exercise
+# Exercise: finite differences
 
 Implement the function `∂mymodel_∂K(h, u0, p, t)` which returns the model's derivative with respect to `K`, calculated with a small `h` to be provided by the user.
+
+::: {.callout-caution icon=false collapse="true"}
+# Solution
 
 ::: {.content-hidden unless-meta="showsol"}
 ```{julia}
@@ -104,9 +108,8 @@ end
 #...
 ```
 :::
-
 :::
-
+:::
 The gradient of the model is useful to understand how a parameter influences the output of the model. Let's calculate the importance of the carrying capacity `K` on the model output:
 
 ```julia
@@ -202,8 +205,7 @@ plot(sol_true)
 This is the true state of the system. Now let's contaminate it with observational noise. 
 
 
-:::::: {.callout-tip icon="false"}
-
+::: {.callout-tip icon=false}
 # Exercise: contaminate data with noise
 
 Create a `data_mat` array, which consists of the ODE solution contaminated with a lognormally-distributed noise with standard deviation `0.3`. 
@@ -212,6 +214,8 @@ Create a `data_mat` array, which consists of the ODE solution contaminated with 
 Note that we add lognormally-distributed noise instead of normally-distributed because we are observing population abundance, which can only be positive.
 :::
 
+::: {.callout-caution icon=false collapse="true"}
+# Solution
 ::: {.content-hidden unless-meta="showsol"}
 ```{julia}
 data_mat = Array(sol_true) .* exp.(0.3 * randn(size(sol_true)))
@@ -220,11 +224,11 @@ plot(sol_true; alpha=0.3)
 scatter!(sol_true.t, data_mat'; color=[1 2], label="")
 ```
 :::
-
 ::: {.content-visible unless-meta="showsol"}
 ```{julia}
 # data_mat = ...
 ```
+:::
 :::
 :::
 
@@ -285,7 +289,7 @@ callback(pinit, loss(pinit)...; doplot = true)
 ```
 Our initial predictions are bad, but you'll likely get even worse predictions in a real-case scenario!
 
-We'll use the library `Optimization`, which is a wrapper library around many optimization libraries in Julia providing you with many different types of optimizers, to find parameters minimizing `loss`. We'll specifically use the infamous [Adam optimizer](https://arxiv.org/abs/1412.6980) (187k citations!!!), widely used in ML.
+We'll use the library `Optimization`, which is a wrapper library around many optimization libraries in Julia. `Optimization` therefore provides us with many different types of optimizers to find parameters minimizing `loss`. We'll specifically use the infamous [Adam optimizer](https://arxiv.org/abs/1412.6980) (187k citations!!!), widely used in ML.
 
 ```julia
 using Optimization
@@ -302,14 +306,15 @@ res_ada.minimizer
 
 Nice! It seems that the optimizer did a reasonable job, and that we found a reasonable estimate of our parameters!
 
-
-::: {.callout-tip icon="false"}
+::: {.callout-tip icon=false}
 # Exercise: Hey, this is cheating!
 
 Notice that we use the true `u0`, as if we were to know exactly the initial state. In a real situation, we need also to infer the true state!
 
 Can you modify the model to infer the true state?
 
+::: {.callout-caution icon=false collapse="true"}
+# Solution
 ::: {.content-hidden unless-meta="showsol"}
 ```{julia}
 function loss2(p)
@@ -359,6 +364,28 @@ res_ada.minimizer
 ```
 :::
 :::
+:::
+
+## Regularization
+In supervised learning, it is common practice to regularize the model to prevent overfitting. Regularization can also help the model to converge. Regularization is done by adding a penalty term to the loss function:
+
+$$
+\text{Loss}(\theta) = \text{Loss}_{\text{data}}(\theta) + \lambda \, \text{Reg}(\theta)
+$$
+
+::: {.callout-tip icon=false}
+# Exercise: regularization
+Add a regularization term to the loss, which penalizes the loss when the inferred initial conditions are less than 0.
+
+::: {.content-visible unless-meta="showsol"}
+::: {.callout-caution icon=false}
+# Solution
+```{julia}
+#...
+```
+:::
+:::
+:::
 
 
 ## Sensitivity methods
@@ -368,7 +395,16 @@ AD comes in different flavours, with broadly two types of AD methods - **forward
 
 You can specify which ones `Optimization.jl` will use to differentiate `loss` with `adtype`, see available options [here](https://docs.sciml.ai/Optimization/stable/API/ad/). 
 
-But when it comes to differentiating the `solve` function from `OrdinaryDiffEq`, you want to use `AutoZygote()`, because when trying to differentiate `solve`, a specific adjoint rule provided by the `SciMLSensitivity` package will be used. These adjoint rules can be specificed by the keyword `sensealg` when calling `solve` and are designed for best performance when differentiating numerical solutions to ODEs. There exist a lot of them (see a review [here](https://arxiv.org/abs/2406.09699)), and if `sensealg` is not provided, a smart polyalgorithm is going to pick up one for you.
+But when it comes to differentiating the `solve` function from `OrdinaryDiffEq`, you want to use `AutoZygote()`, because when trying to differentiate `solve`, a specific adjoint rule provided by the `SciMLSensitivity` package will be used. 
+
+::: {.callout-note}
+# What are adjoint rules?
+These are algoirithmic rules that specify to the AD backend *how* to calculate the derivative of a specific function.
+
+If you want to know more, check-out the [ChainRules.jl documentation](https://juliadiff.org/ChainRulesCore.jl/)
+:::
+
+These adjoint rules can be specificed by the keyword `sensealg` when calling `solve` and have been designed for best performance when differentiating solutions of an `ODEProblem`. There exists a lot of them (see a review [here](https://arxiv.org/abs/2406.09699)), and if `sensealg` is not provided, a smart polyalgorithm is going to pick up one for you.
 
 You can have a look in the documentation [here](https://docs.sciml.ai/SciMLSensitivity/stable/manual/differential_equation_sensitivities/) for hints on how to choose an algorithm. 
 
@@ -425,11 +461,24 @@ Julia has a very strong library for Bayesian inference: [Turing.jl](https://turi
 
 Let's declare our first Turing model!
 
-This is done with the `@model` macro, which allows the library to automatically construct the posterior distribution based on the definition of your model's random variables, assigned with the `~` symbol.
+This is done with the `@model` macro, which allows the library to automatically construct the posterior distribution based on the definition of your model's random variables. 
+
+::: {.callout-note}
+# Frequentist (supervised learning) vs. Bayesian approach
+
+The main difference between a frequentist approach and a Bayesian approach is that the latter considers that parameters are random variables. Hence instead of trying to estimate a single value for the parameters, the Bayesian will try to estimate the posterior (joint) distribution of those parameters. 
+
+$$
+P(\theta | \mathcal{D}) = \frac{P(\mathcal{D} | \theta) P(\theta)}{P(\mathcal{D})}
+$$
+
+:::
+
+Random variables are defined with the `~` symbol.
 
 ### Our first Turing model
 
-```julia
+```{julia}
 using Turing
 using LinearAlgebra
 
@@ -458,7 +507,7 @@ end
 
 Now we can instantiate our model, and run the inference!
 
-```julia
+```{julia}
 
 model = fitlv(data_mat, prob)
 
@@ -479,7 +528,7 @@ Let's see if our chains have converged.
 using StatsPlots
 plot(chain)
 ```
-<!-- VICTOR, you stopped here -->
+
 ### Data retrodiction
 
 Let's now generate simulated data using samples from the posterior distribution, and compare to the original data.
@@ -502,13 +551,17 @@ end
 plot_predictions(chain, sol_true, data_mat)
 ```
 
-### Exercise: Hey, this is cheating!
+::: {.callout-tip icon=false}
+# Exercise: Hey, this is cheating!
 
 Notice that we use the true `u0`, as if we were to know exactly the initial state. In a real situation, we need also to infer the true state!
 
 Can you modify the model to infer the true state?
 
-```julia
+::: {.content-hidden unless-meta="showsol"}
+::: {.callout-caution icon=false collapse="true"}
+# Solution
+```{julia}
 @model function fitlv2(data, prob)
     # Prior distributions.
     σ ~ InverseGamma(2, 3)
@@ -539,11 +592,33 @@ model2 = fitlv2(data_mat, prob)
 chain2 = sample(model2, NUTS(), MCMCThreads(), 3000, 3; progress=true)
 plot(chain2)
 ```
+:::
+:::
+::: {.content-visible unless-meta="showsol"}
+
+::: {.callout-caution icon=false}
+# Solution
+```{julia}
+# @model function fitlv2(data, prob)
+#     # Prior distributions.
+#     σ ~ InverseGamma(2, 3)
+#     α ~ truncated(Normal(1.5, 0.5); lower=0.5, upper=2.5)
+#     β ~ truncated(Normal(1.2, 0.5); lower=0, upper=2)
+#     γ ~ truncated(Normal(3.0, 0.5); lower=1, upper=4)
+#     δ ~ truncated(Normal(1.0, 0.5); lower=0, upper=2)
+#     u0 ~ ...
+#     ...
+# end
+# ...
+# chain2 = ...
+```
+:::
+:::
+:::
 
 Here is a small utility function to visualize your results.
 
-```julia
-
+```{julia}
 function plot_predictions2(chain, sol, data_mat)
     myplot = plot(; legend=false)
     posterior_samples = sample(chain, 300; replace=false)
@@ -568,8 +643,33 @@ plot_predictions2(chain2, sol_true, data_mat)
 
 
 ### Mode estimation
-Turing allows you to find the maximum likelihood estimate (MLE) or maximum a posteriori estimate (MAP), similarly to what we have done by hand with the Optimization.jl library. These can be obtained by `maximum_likelihood` and `maximum_a_posteriori`.
+Turing allows you to find the maximum likelihood estimate (MLE) or maximum a posteriori estimate (MAP). 
 
+$$
+\theta_{MLE} = \underset{\theta}{\text{argmax}} \, P(\mathcal{D} | \theta), \qquad \theta_{MAP} = \underset{\theta}{\text{argmax}} \, P(\theta | \mathcal{D}).
+$$
+
+::: {.callout-note}
+# MAP and regularization in supervised learning
+
+Although Bayesian inference seems very different from the supervised learning approach we developed in the first part, estimating the MAP, which can be still considered as Bayesian inference, transforms in an optimization problem that can be seen as a supervised task. 
+
+To see that, we can log-transform the posterior:
+
+$$
+\log P(\theta | \mathcal{D}) = \log P(\mathcal{D} | \theta) + \log P(\theta) - \log P(\mathcal{D})
+$$
+
+Since the evidence $P(\mathcal{D})$ is independent of $\theta$, it can be ignored when maximizing with respect to $\theta$. Therefore, the MAP estimate simplifies to:
+
+$$
+\theta_{MAP} = \underset{\theta}{\text{argmax}} \, \left[\log P(\mathcal{D} | \theta) + \log P(\theta)\right]
+$$
+
+Here, $\log P(\mathcal{D}| \theta)$ can be seen as our previous non-regularized `loss` and $\log P(\theta)$ acts as a regularization term, penalizing unlikely parameter values based on our prior beliefs. Priors on parameters can be seen as regularization term.
+:::
+
+MLE and MAP can be obtained by `maximum_likelihood` and `maximum_a_posteriori`.
 
 ```julia
 Random.seed!(0)
@@ -592,15 +692,20 @@ using StatsBase
 coeftable(map_res)
 ```
 
+::: {.callout-tip icon=false}
+# Exercise: Partially observed state
+Let's assume the following situation: for some reason, you only have observation data for the predator. Could you still infer all parameters of your model, including those of the prey?
 
-### Partially observed state
-Let's assume an ever more complicated situation: for some reason, you only have observation data for the predator. Could you still infer all parameters of your model, including those of the prey?
+Could be! Because the signal of the variation in abundance of the predator contains information on the dynamics of the whole predator-prey system.
 
-YES! Because the signal of the variation in abundance of the predator contains information on the dynamics of the whole predator-prey system.
+Do it!
 
-Let's see how we can do that with Turing.jl. Here we need to assume so prior state for the prey. We'll just assume that it is the same as that of the predator.
+You'll need to assume so prior state for the prey. Just assume that it is the same as that of the predator.
 
-```julia
+::: {.content-hidden unless-meta="showsol"}
+::: {.callout-caution icon=false collapse="true"}
+# Solution
+```{julia}
 @model function fitlv3(data::AbstractVector, prob)
     # Prior distributions.
     σ ~ InverseGamma(2, 3)
@@ -632,10 +737,35 @@ plot(chain3)
 p = plot_predictions2(chain3, sol, data_mat)
 plot!(p, yaxis=:log10)
 ```
+:::
+:::
+::: {.content-visible unless-meta="showsol"}
+::: {.callout-caution icon=false}
+# Solution
+```{julia}
+# @model function fitlv3(data::AbstractVector, prob)
+#     # Prior distributions.
+#     σ ~ InverseGamma(2, 3)
+#     α ~ truncated(Normal(1.5, 0.5); lower=0.5, upper=2.5)
+#     β ~ truncated(Normal(1.2, 0.5); lower=0, upper=2)
+#     γ ~ truncated(Normal(3.0, 0.5); lower=1, upper=4)
+#     δ ~ truncated(Normal(1.0, 0.5); lower=0, upper=2)
+#     u0 ~ #...MvLogNormal([data[1], data[1]], σ^2 * I)
+#     ...
+# end
 
+# model3 = fitlv3(...
+
+# Sample 3 independent chains.
+# chain3 = ...
+```
+:::
+:::
+:::
+<!-- 
 How cool!
 
-Now you need to realise that up to now, we had a relatively simple model. How would this model scale, should we have a much larger model? Let's cook-up some idealised LV model.
+Now you need to realise that up to now, we had a relatively simple model. How would this model scale, should we have a much larger model? Let's cook-up some idealised LV model. -->
 
 
 ### AD backends and `sensealg`
@@ -646,17 +776,40 @@ By default, `Turing.jl` uses `ForwardDiff.jl` as an AD backend, meaning that the
 ```julia
 chain2 = sample(model2, NUTS(), MCMCThreads(), adtype=AutoZygote(), 3000, 3; progress=true)
 ```
+Doing so, you could specify within `solve` the `adtype`. It is usually a good idea to try a few different sensitivity algorithm.
 
 See [here](https://turinglang.org/docs/tutorials/docs-10-using-turing-autodiff/index.html) for more information. 
 
-### Using Variational Inference
+::: {.callout-tip icon=false}
+# Exercise: benchmark 
+
+Can you evaluate the performance of `ForwardDiffSensitivity()` and `ReverseDiffAdjoint()`?
+
+::: {.callout-caution icon=false}
+# Solution
+```{julia}
+#...
+```
+:::
+:::
+
+### Variational Inference
+Variational inference (VI) consists in approximating the true posterior distribution $P(\theta | \mathcal{D})$ by an approximate distribution $Q(\theta; \phi)$, where $\phi$ is a parameter vector defining the shape, location, and other characteristics of the approximate distribution $Q$, to be optimzed so that $Q$ is as close as possible to $P$. This is achieved by minimizing the Kullback-Leibler (KL) divergence between the true posterior $P(\theta | \mathcal{D})$ and the approximate distribution :
+
+$$
+\phi^* = \underset{\phi}{\text{argmin}} \, \text{KL}\left(Q(\theta; \phi) \,||\, P(\theta | \mathcal{D})\right)
+$$
+
+The advantage of VI over traditional MCMC sampling methods is that VI is generally faster and more scalable to large datasets, as it transforms the inference problem into an optimization problem.
+
+Let's do VI in Turing!
 
 ```julia
 import Flux
 using Turing: Variational
 model = fitlv2(data_mat, prob)
 q0 = Variational.meanfield(model)
-advi = ADVI(10, 10_000)
+advi = ADVI(10, 10_000) # first arg is the 
 
 q = vi(model, advi, q0; optimizer=Flux.ADAM(1e-2))
 
@@ -677,10 +830,20 @@ function plot_predictions_vi(q, sol, data_mat)
 end
 
 plot_predictions_vi(q, sol, data_mat)
-
 ```
 
-- https://turinglang.org/docs/tutorials/09-variational-inference/
+The cool thing with VI that we can sample from the resulting `q` with ease. 
+
+```{julia}
+q isa MultivariateDistribution
+```
+```{julia}
+rand(q)
+```
+
+
+- [Learn more on VI in turing here](https://turinglang.org/docs/tutorials/09-variational-inference/)
+- [VI in general here](https://mpatacchiola.github.io/blog/2021/01/25/intro-variational-inference.html)
 
 ### Summary of resources Resources
 - https://turinglang.org/docs/tutorials/10-bayesian-differential-equations/
