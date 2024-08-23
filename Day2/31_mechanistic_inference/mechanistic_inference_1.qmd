@@ -1188,7 +1188,7 @@ scatter!(sol_true,  color = [:blue :red])
 :::
 :::
 
-Excellent! Now let's investigate what did the neural network learn!
+Happy with the convergence? Now let's investigate what did the neural network learn!
 
 ```{julia}
 #| code-fold: true
@@ -1243,7 +1243,7 @@ Could you try to obtain a bayesian estimate of the functional forms with e.g. VI
 :::
 :::
 
-This concludes this tutorial; I hope that this has given you plenty of ideas for future research projects!
+This concludes this tutorial; I hope that it has given you plenty of ideas for your future research projects!
 
 ## Resources
 - https://turinglang.org/docs/tutorials/10-bayesian-differential-equations/
