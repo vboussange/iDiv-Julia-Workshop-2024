@@ -63,6 +63,23 @@ function createspecies(id::Int)
 end
 
 """
+    random_nearby_position(agent, radius)
+
+Return a random position within a given radius around the agent.
+(Agents.jl has an inbuilt function for this, but it doesn't work with continuous space.)
+"""
+function random_nearby_position(a::AbstractAgent, r::Int)
+    sx = a.pos.x + rand(-r:r)
+    dy = Int(round(sqrt(abs(r^2-(sx-a.pos.x)^2))))
+    sy = a.pos.y + rand(-dy:dy)
+    if sx > settings["worldsize"] || sx <= 0 || sy > settings["worldsize"] || sy <= 0
+        random_nearby_position(a, r) # if our position was out of bounds, try again
+    else
+        return (sx, sy)
+    end
+end
+
+"""
     agent_step!(tree, model)
 
 Carry out each of the four ecological processes (dispersal, competition, infection, growth)
@@ -71,16 +88,9 @@ for one tree in the model. This is the stepping function for Agents.jl.
 function agent_step!(tree::Tree, model::AgentBasedModel)
     # reproduction and dispersal
     if tree.mature
-        dx = tree.species.dispersal_distance
         for s in 1:tree.species.seed_production
-            # find a random location within the species' dispersal distance
-            sx = tree.pos.x + rand(-dx:dx)
-            dy = Int(round(sqrt(abs(dx^2-(sx-tree.pos.x)^2))))
-            sy = tree.pos.y + rand(-dy:dy)
-            if sx >= -settings["worldsize"] && sx <= settings["worldsize"] &&
-                sy >= -settings["worldsize"] && sy <= settings["worldsize"]
-                add_agent!((sx, sy), model, (0,0), tree.species, 0, 0, false, false)
-            end
+            location = random_nearby_position(tree, tree.species.dispersal_distance)
+            add_agent!(location, model, (0,0), tree.species, 0, 0, false, false)
         end
     end
     # competition for space

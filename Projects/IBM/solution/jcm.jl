@@ -9,6 +9,11 @@
 ####     Licensed under the terms of the MIT license.
 ####
 
+###
+### To run this code, open a Julia REPL in this folder and type `include("jcm.jl")`.
+### Then launch the program using `jcm.openapp()`.
+###
+
 module jcm
 
 const jcm_version = v"2.0"
@@ -21,7 +26,7 @@ using Agents,
 
 const settings = Dict("species" => 16,              # The number of species that will be created
                       "worldsize" => 1000,          # The length and breadth of the world in m
-                      "runtime" => 1000,            # The number of updates the simulation will run
+                      "runtime" => 500,             # The number of updates the simulation will run
                       "datafile" => "jcm_data.csv", # The name of the recorded data file
                       "datafreq" => 50,             # How long between data recordings?
                       "pathogens" => true,          # Include pathogens in the simulation?

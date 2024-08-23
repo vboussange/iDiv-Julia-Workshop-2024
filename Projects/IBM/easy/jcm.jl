@@ -15,6 +15,10 @@
 ### This file is intended for the IBM course project. Copy it and the associated file
 ### `ecology.jl` to another location and edit it there. Complete all `TODO` statements
 ### to get a working model.
+###
+### To run this code, open a Julia REPL in this folder and type `include("jcm.jl")`.
+### Then launch the program using `jcm.openapp()`.
+###
 
 
 module jcm
@@ -28,7 +32,7 @@ using Agents,
 # behaviour (especially "pathogens", "transmission", and "neutral").
 const settings = Dict("species" => 16,              # The number of species that will be created
                       "worldsize" => 1000,          # The length and breadth of the world in m
-                      "runtime" => 1000,            # The number of updates the simulation will run
+                      "runtime" => 500,             # The number of updates the simulation will run
                       "pathogens" => true,          # Include pathogens in the simulation?
                       "transmission" => 40,         # Pathogen infection radius
                       "neutral" => false,           # All species have identical trait values?
