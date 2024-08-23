@@ -2,7 +2,7 @@
 title: "A primer on mechanistic inference with differentiable process-based models in Julia"
 jupyter: julia-1.10
 execute: 
-    eval: false
+    eval: true
 showsol: true
 format:
     html:
@@ -192,12 +192,13 @@ u0 = [2.0, 2.0]
 p_true = (;α = 1.5, β = 1.0, γ = 3.0, δ = 1.0)
 # tspan = (hudson_bay_data[1,:t], hudson_bay_data[end,:t])
 tspan = (0., 5.)
-tsteps =  range(tspan[1], tspan[end], 51)
+tsteps = range(tspan[1], tspan[end], 51)
 alg = Tsit5()
 
 prob = ODEProblem(lotka_volterra, u0, tspan, p_true)
 
-sol_true = solve(prob, alg; saveat=tsteps)
+saveat = tsteps
+sol_true = solve(prob, alg; saveat)
 # Plot simulation.
 plot(sol_true)
 ```
@@ -539,6 +540,8 @@ function loss_sensealg(p, sensealg)
 end
 ```
 ```{julia}
+pinit = ComponentArray(;α = 1., β = 1.5, γ = 1.0, δ = 0.5, u0 = data_mat[:,1])
+
 @btime Zygote.gradient(p -> loss_sensealg(p, ForwardDiffSensitivity()), pinit)
 ```
 
