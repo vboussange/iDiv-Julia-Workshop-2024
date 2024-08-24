@@ -1,3 +1,8 @@
+
+raster_data_path = @__DIR__() * "/../data/raster-data/"
+mkpath(raster_data_path)
+ENV["RASTERDATASOURCES_PATH"] = raster_data_path
+
 using Graphs, SimpleWeightedGraphs
 using UnPack
 using SparseArrays
@@ -62,18 +67,20 @@ pixels which are not suited at all for the considered species, so that these
 pixels are discarded. The mapping between the landscape graph and the raster is
 ensured by `id_to_grid_coordinate_list`.
 """
-struct Landscape{R,M,AT,D,ID}
+struct Landscape{R,M,D,ID}
     raster::R
     nrows::M # raster nb rows
     ncols::M # raster nb cols
-    A::AT # adjacency matrix
     dists::D # distance matrix
     id_to_grid_coordinate_list::ID
 end
 
 function Landscape(raster)
     nrows, ncols = size(raster)
-    A = graph_matrix_from_raster(raster)
+
+    permeability = .!isnan.(raster)
+
+    A = graph_matrix_from_raster(permeability)
     id_to_grid_coordinate_list = vec(CartesianIndices((nrows, ncols)))
     
     # pruning
@@ -85,9 +92,18 @@ function Landscape(raster)
     @info "Calculating shortest paths"
 
     dists = floyd_warshall_shortest_paths(g, weights(g)).dists
-    Landscape(raster, nrows, ncols, A, dists, id_to_grid_coordinate_list)
+    Landscape(raster, nrows, ncols, dists, id_to_grid_coordinate_list)
 end
 
+"""
+    scale(raster::Raster)
+
+Scale raster with offset and scale.
+"""
+function scale(raster::Raster)
+    T = typeof(raster.metadata["scale"])
+    (raster .|> T) .* raster.metadata["scale"] .+ raster.metadata["offset"]
+end
 
 """
     load_raster()
@@ -139,97 +155,4 @@ function get_raster_values(val, l::Landscape)
         canvas[idxs[l.id_to_grid_coordinate_list[i]]...] = v
     end
     return canvas
-end
-
-Base.@kwdef struct DynSDM{L,DX,ED} <: AbstractDynModel
-    landscape::L
-    Δ_x::DX
-    ecological_dynamics::ED 
-end
-
-"""
-    (model::DynSDM)(u, p)
-    
-Returns the change in abundance during a single time step, based on
-`model.ecological_dynamics` and dispersal process, calculated based on
-`model.landscape` and `p.m` (migration rate).
-"""
-function (model::DynSDM)(u, p)
-    @unpack Δ_x, landscape, ecological_dynamics = model
-    @unpack m = p
-    # u = maximum.(u, zeros(eltype(u)))
-
-    du = ecological_dynamics(u)
-    lux = m * Δ_x * u
-    du = du - lux
-    return du
-end
-
-
-"""
-    build_dyn_model(temp_raster)
-Builds a `DynSDM` dynamical model. This model can be simulated with the
-`simulate` or `step` functions.
-"""
-function build_dyn_model(temp_raster::Raster)
-
-    @info "building dynamical model"
-
-    permeability = .!isnan.(temp_raster)
-    landscape = Landscape(permeability)
-
-    Ts = temp_raster[landscape.id_to_grid_coordinate_list]
-    T0 = 4.0
-    K0 = exp.(-((T0 .- Ts)) .^ 2)
-    plot(get_raster_values(K0, landscape))
-
-    ecological_dynamics = function (x::Array{T}) where {T}
-        return x .* (one(T) .- x ./ K0)
-    end
-
-    disp_proximities = sparse(disp_kern.(landscape.dists))
-    Δₓ = I - (disp_proximities ./ sum(disp_proximities,dims=1))
-    
-    return DynSDM(landscape, Δₓ, ecological_dynamics)
-end
-
-"""
-    function(x, dd = 4, threshold = 0.1)
-
-Exponential dispersal kernel with mean distance `dd`, returning corresponding
-proximity.
-"""
-disp_kern = function(x, dd = 4, threshold = 0.1)
-    prox = exp(-x / dd)
-    if prox < threshold
-        return 0.
-    end
-    return prox
-end
-
-"""
-    step(model::DynSDM, u0, p)
-
-Performs one step ahead prediction with a `DynSDM` model, based on `u0` and
-model parametr `p`.
-"""
-function step(model::AbstractDynModel, u0, p)
-    u = u0 + model(u0, p)
-    return max.(u, zero(eltype(u)))
-end
-
-"""
-    simulate(model::DynSDM, u0, ntsteps, p)
-
-Performs `ntsteps` ahead prediction with a `DynSDM` model, based on `u0` and
-model parametr `p`. Predictions returned as a vector with entry `i`
-corresponding to step `i`.
-"""
-function simulate(model::AbstractDynModel, u0, ntsteps, p)
-    us = [similar(u0) for i in 1:ntsteps+1]
-    us[1] .= u0
-    for i in 2:ntsteps+1
-        us[i] .= step(model, us[i-1], p)
-    end
-    return us
 end
