@@ -4,13 +4,15 @@ jupyter: julia-1.10
 execute: 
     eval: true
     cache: true
-showsol: true
+    warning: false
+showsol: false
 format:
     html:
         toc: true
         toc-depth: 4
         # toc-expand: 2
     ipynb: default
+    md: default
 editor:
   render-on-save: true
 ---
@@ -155,7 +157,7 @@ Fortunately, Julia is an *AD-pervasive language*! This means that any piece of J
 ```{julia}
 using ForwardDiff
 
-@btime ForwardDiff.gradient(p -> mymodel(u0, p, 1.), p)
+@btime ForwardDiff.gradient(p -> mymodel(u0, p, 1.), p);
 ```
 
 This is what makes Julia great for model calibration and inference! Write your model in Julia, and any inference method using AD will be able to work with your model!
@@ -268,15 +270,13 @@ Let's define a helper function, that will plot how good does the model perform a
 losses = []
 callback = function (p, l, pred; doplot=true)
     push!(losses, l)
-    if length(losses)%10==0
-      println("Current loss after $(length(losses)) iterations: $(losses[end])")
-    end
-    if doplot
-        plt = scatter(sol_true.t, data_mat[1,:]; label = "data x", color = :blue, markerstrokewidth=0)
-        scatter!(plt, sol_true.t, Array(pred)[1,:]; label = "prediction x", color = :blue, markershape=:star5, markerstrokewidth=0)
-        scatter!(plt, sol_true.t, data_mat[2,:]; label = "data y", color = :red, markerstrokewidth=0)
-        scatter!(plt, sol_true.t, Array(pred)[2,:]; label = "prediction y", color = :red, markershape=:star5, markerstrokewidth=0)
-        display(plot(plt, yaxis = :log10))
+    if length(losses)%100==1
+        println("Current loss after $(length(losses)) iterations: $(losses[end])")
+        if doplot
+            plt = scatter(tsteps, data_mat',  color = [1 2], label=["Prey abundance data" "Predator abundance data"])
+            plot!(plt, tsteps, pred', color = [1 2], label=["Inferred prey abundance" "Inferred predator abundance"])
+            display(plot(plt, yaxis = :log10, title="it. : $(length(losses))"))
+        end
     end
     return false
 end
@@ -302,7 +302,7 @@ adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
 optprob = Optimization.OptimizationProblem(optf, pinit)
 
-@time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 500)
+@time res_ada = Optimization.solve(optprob, Adam(0.1); callback, maxiters = 500)
 res_ada.minimizer
 ```
 
@@ -344,7 +344,7 @@ adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x, p) -> loss2(x), adtype)
 optprob = Optimization.OptimizationProblem(optf, pinit)
 
-@time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 1000)
+@time res_ada = Optimization.solve(optprob, Adam(0.1); callback, maxiters = 1000)
 res_ada.minimizer
 ```
 :::
@@ -361,7 +361,7 @@ res_ada.minimizer
 # optf = Optimization.OptimizationFunction((x, p) -> loss2(x), adtype)
 # optprob = Optimization.OptimizationProblem(optf, pinit)
 
-# @time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 1000)
+# @time res_ada = Optimization.solve(optprob, Adam(0.1); callback, maxiters = 1000)
 # res_ada.minimizer
 ```
 :::
@@ -446,7 +446,7 @@ adtype = Optimization.AutoZygote()
 optf = Optimization.OptimizationFunction((x, p) -> loss_multiple_shooting(x), adtype)
 optprob = Optimization.OptimizationProblem(optf, pinit)
 
-@time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 500)
+@time res_ada = Optimization.solve(optprob, Adam(0.1); callback, maxiters = 500)
 res_ada.minimizer
 ```
 :::
@@ -484,7 +484,7 @@ res_ada.minimizer
 # optf = Optimization.OptimizationFunction((x, p) -> loss(x), adtype)
 # optprob = Optimization.OptimizationProblem(optf, pinit)
 
-# @time res_ada = Optimization.solve(optprob, ADAGrad(0.1); callback = callback, maxiters = 500)
+# @time res_ada = Optimization.solve(optprob, Adam(0.1); callback, maxiters = 500)
 # res_ada.minimizer
 ```
 :::
@@ -543,11 +543,11 @@ end
 ```{julia}
 pinit = ComponentArray(;α = 1., β = 1.5, γ = 1.0, δ = 0.5, u0 = data_mat[:,1])
 
-@btime Zygote.gradient(p -> loss_sensealg(p, ForwardDiffSensitivity()), pinit)
+@btime Zygote.gradient(p -> loss_sensealg(p, ForwardDiffSensitivity()), pinit);
 ```
 
 ```{julia}
-@btime Zygote.gradient(p -> loss_sensealg(p, ReverseDiffAdjoint()), pinit)
+@btime Zygote.gradient(p -> loss_sensealg(p, ReverseDiffAdjoint()), pinit);
 ```
 
 :::
@@ -943,7 +943,7 @@ function plot_predictions_vi(q, sol, data_mat)
     return myplot
 end
 
-plot_predictions_vi(q, sol, data_mat)
+plot_predictions_vi(q, sol_true, data_mat)
 ```
 
 The cool thing with VI that we can sample from the resulting `q` with ease. 
@@ -976,6 +976,7 @@ Let's get started. To make the neural network, we'll use the deep learning libra
 To make things simpler, we will define a single layer neural network
 ```{julia}
 using Lux
+Random.seed!(2)
 rng = Random.default_rng()
 nn_init = Lux.Chain(Lux.Dense(2,2, relu))
 p_nn_init, st_nn = Lux.setup(rng, nn_init)
@@ -1003,7 +1004,7 @@ nn_init(u0, p_nn_init, st_nn)
 Let's define a new parameter vectors, which will consist of the ODE model parameters as well as the neural net parameters
 
 ```{julia}
-pinit = ComponentArray(;σ = 0.3, α = 1.5, γ = 3.0, p_nn=p_nn_init)
+pinit = ComponentArray(;σ = 0.3, α = 1., γ = 1.0, p_nn=p_nn_init)
 ```
 
 ::: {.callout-tip icon=false}
@@ -1111,12 +1112,12 @@ model = fitlv_nn(data_mat, prob_nn)
 
 ```{julia}
 using Optimization, OptimizationOptimisers
-@time mle_res = maximum_likelihood(model, ADAM(0.1), maxiters=1000, initial_params=pinit)
-pmle = ComponentArray(;σ=0, pinit...)
-pmle .= mle_res.values[:]
-sol_mle = solve(prob_nn, alg;p=pmle, saveat, tspan = (0, 10))
-plot(sol_mle)
-scatter!(sol_true,  color = [:blue :red])
+@time map_res = maximum_a_posteriori(model, ADAM(0.05), maxiters=3000, initial_params=pinit)
+pmap = ComponentArray(;σ=0, pinit...)
+pmap .= map_res.values[:]
+sol_map = solve(prob_nn, alg;p=pmap, saveat, tspan = (0, 10))
+scatter(tsteps, data_mat',  color = [1 2], label=["Predator abundance data" "Prey abundance data"])
+plot!(sol_map, color = [1 2], label=["Inferred predator abundance" "Inferred prey abundance"], yscale=:log10)
 ```
 This seems to fail.
 
@@ -1173,12 +1174,12 @@ end
 
 model = fitlv_nn(data_mat, prob_nn)
 
-@time mle_res = maximum_likelihood(model, ADAM(0.1), maxiters=1000, initial_params=pinit)
-pmle = ComponentArray(;σ=0, pinit...)
-pmle .= mle_res.values[:]
-sol_mle = solve(prob_nn, alg;p=pmle, saveat, tspan = (0, 10))
-plot(sol_mle)
-scatter!(sol_true,  color = [:blue :red])
+@time map_res = maximum_a_posteriori(model, Adam(0.1), maxiters=3000, initial_params=pinit)
+pmap = ComponentArray(;σ=0, pinit...)
+pmap .= map_res.values[:]
+sol_map = solve(prob_nn, alg;p=pmap, saveat, tspan = (0, 10))
+plot(sol_map, label=["Inferred predator abundance" "Inferred prey abundance"])
+scatter!(sol_map.t, data_mat',  color = [1 2], label=["Predator abundance data" "Prey abundance data"], yscale=:log10)
 ```
 :::
 :::
@@ -1198,26 +1199,27 @@ Happy with the convergence? Now let's investigate what did the neural network le
 #| code-fold: true
 #| code-summary: "`plot_func_resp`"
 
-function plot_func_resp(pmle, data)
+function plot_func_resp(p, data)
     # plotting prediction of functional response
     u1 = range(minimum(data[1,:]), maximum(data[1,:]), length=100) 
     u2 = range(minimum(data[2,:]), maximum(data[2,:]), length=100) 
     u = hcat(u1,u2)
 
-    func_resp = nn(u', pmle.p_nn)
+    func_resp = nn(u', p.p_nn)
 
     myplot1 = plot(u2,
-                    p_true.β .* u2; 
-                    label="True functional form")
+                    - p_true.β .* u2; 
+                    label="True functional form", 
+                    xlabel="Predator abundance")
     plot!(myplot1,
                 u2,
-                func_resp[1,:]; 
+                - func_resp[1,:]; 
                 color="#BBBBBB",
                 label="Inferred functional form")
 
     myplot2 = plot(u1,
                     p_true.δ .* u2; 
-                    legend=false)
+                    legend=false, xlabel="Prey abundance")
 
     plot!(myplot2,
             u1,
@@ -1229,7 +1231,7 @@ function plot_func_resp(pmle, data)
 end
 ```
 ```{julia}
-plot_func_resp(pmle, data_mat)
+plot_func_resp(pmap, data_mat)
 ```
 
 The neural network has well captured the functional forms of the predator and prey.
