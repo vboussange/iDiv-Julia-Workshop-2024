@@ -3,6 +3,7 @@ title: "A primer on mechanistic inference with differentiable process-based mode
 jupyter: julia-1.10
 execute: 
     eval: true
+    cache: true
 showsol: true
 format:
     html:
@@ -847,7 +848,7 @@ model3 = fitlv3(data_mat[2, :], prob)
 # Sample 3 independent chains.
 chain3 = sample(model3, NUTS(), MCMCThreads(), 3000, 3; progress=true)
 plot(chain3)
-p = plot_predictions2(chain3, sol, data_mat)
+p = plot_predictions2(chain3, sol_true, data_mat)
 plot!(p, yaxis=:log10)
 ```
 :::

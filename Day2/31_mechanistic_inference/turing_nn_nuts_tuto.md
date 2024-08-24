@@ -175,7 +175,7 @@ using Optimization, OptimizationOptimisers
 @time mle_res = maximum_likelihood(model, ADAM(0.1), maxiters=1000, initial_params=pinit)
 pmle = ComponentArray(;σ=0, pinit...)
 pmle .= mle_res.values[:]
-sol_mle = solve(prob_nn, alg;p=pmle, saveat)
+sol_mle = solve(prob_nn, alg;p=pmle, saveat, tspan = (0, 10))
 plot(sol_mle)
 scatter!(sol_true,  color = [:blue :red])
 ```
@@ -187,7 +187,7 @@ map_res = maximum_a_posteriori(model)
 pmap = ComponentArray(;σ=0, pinit...)
 pmap .= map_res.values[:]
 
-sol_map = solve(prob_nn, alg;p=pmap, saveat)
+sol_map = solve(prob_nn, alg;p=pmap, saveat, tspan = (0, 10))
 # Plot simulation.
 plot(sol_map)
 ```
