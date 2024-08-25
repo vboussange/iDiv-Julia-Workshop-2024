@@ -17,38 +17,6 @@ using JLD2
 include("dynamical_model.jl")
 include(@__DIR__() * "/../../project_src/utils.jl")
 
-
-"""
-    build_dyn_model(land)
-Builds a `DynSDM` dynamical model. This model can be simulated with the
-`simulate` or `step` functions.
-"""
-function build_dyn_model(landscape::Landscape, p)
-    @info "building dynamical model"
-    @unpack T0, α, m = p
-    Ts = landscape.raster[:]
-    T0 = 4.0
-    K = exp.(-((T0 .- Ts)) .^ 2)
-
-    disp_proximities = sparse(disp_kern.(landscape.dists, α))
-    D = - m * (I - (disp_proximities ./ sum(disp_proximities,dims=1)))
-    return DynSDM(landscape, K, D)
-end
-
-"""
-    function(x, dd = 4, threshold = 0.1)
-
-Exponential dispersal kernel with mean distance `dd`, returning corresponding
-proximity.
-"""
-disp_kern = function(x, α, threshold = 0.1)
-    prox = exp(-x / α)
-    if prox < threshold
-        return 0.
-    end
-    return prox
-end
-
 temp_raster = load_raster()
 
 plot(temp_raster)

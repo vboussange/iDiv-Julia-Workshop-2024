@@ -61,7 +61,7 @@ end
 function loss(model, ps, st, data)
     x, y = data
     ŷ, st = Lux.apply(model, x, ps, st)
-    l = binarycrossentropy(y, ŷ)
+    l = binarycrossentropy(ŷ, y)
     return l, st, (;)
 end
 

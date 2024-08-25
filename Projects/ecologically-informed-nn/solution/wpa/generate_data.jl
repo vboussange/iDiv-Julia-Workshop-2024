@@ -22,7 +22,7 @@ function generate_PA_data(;env_data, proba_observation_raster, n_samples)
     return pred, reshape(rand.(Bernoulli.(proba)), 1, :) .|> Float32
 end
 
-n_samples= 500
+n_samples= 300
 τ = 100
 
 XY_arr = []
@@ -42,4 +42,7 @@ for i ∈ 1:length(XY_arr)
     append!(df, DataFrame(vcat(pred_i, y, fill(i, length(y))')', ["x", "y", "temp" , "PA", "t"]))
 end
 
-CSV.write(@__DIR__() * "/../../data/PA_data.csv", df)
+csv_path = @__DIR__() * "/../../data/PA_data.csv"
+jld2_path = @__DIR__() * "/../../data/true_abundance_data.jld2"
+CSV.write(csv_path, df)
+JLD2.@save jld2_path sol_rasters
