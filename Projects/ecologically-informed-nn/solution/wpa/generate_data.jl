@@ -22,23 +22,7 @@ function generate_PA_data(;env_data, proba_observation_raster, n_samples)
     return pred, reshape(rand.(Bernoulli.(proba)), 1, :) .|> Float32
 end
 
-
-function balance_dataset(df::DataFrame)
-    # Split the dataset into presences and absences
-    presences = df[df.PA .== true, :]
-    absences = df[df.PA .== false, :]
-
-    # Randomly sample from absences to match the number of presences
-    sample_absences = absences[sample(1:nrow(absences), nrow(presences), replace=false), :]
-
-    # Combine the presences and the sampled absences
-    balanced_df = vcat(presences, sample_absences)
-
-    return balanced_df
-end
-
-
-n_samples= 1000
+n_samples= 500
 τ = 100
 
 XY_arr = []
@@ -57,8 +41,5 @@ for i ∈ 1:length(XY_arr)
     y = XY_arr[i][2]
     append!(df, DataFrame(vcat(pred_i, y, fill(i, length(y))')', ["x", "y", "temp" , "PA", "t"]))
 end
-
-# balance the data:
-df_balanced = balance_dataset(df)
 
 CSV.write(@__DIR__() * "/../../data/PA_data.csv", df)
