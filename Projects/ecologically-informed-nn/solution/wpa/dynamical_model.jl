@@ -1,5 +1,6 @@
 using UnPack
 using LinearAlgebra
+using Rasters
 include(@__DIR__() * "/../../project_src/utils.jl")
 
 struct DynSDM{LD,KK,DD}

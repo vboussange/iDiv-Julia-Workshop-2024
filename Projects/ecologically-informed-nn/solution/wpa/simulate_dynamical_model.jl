@@ -76,7 +76,8 @@ plot(u0_raster)
 u0 = u0_raster[:]
 plot(get_raster_values(u0, landscape))
 
-sol = simulate(model, u0, 20, p)
+ntsteps = 20
+sol = simulate(model, u0, ntsteps, p)
 
 sol_rasters = [get_raster_values(sol[i], landscape) for i in 1:length(sol)]
 
