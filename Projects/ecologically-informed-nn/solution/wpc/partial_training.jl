@@ -2,7 +2,8 @@ using CSV
 using Lux, Optimisers, Zygote
 import Flux: binarycrossentropy, mse
 using DataFrames
-using MLJ, MLUtils
+using MLJ
+import MLUtils: DataLoader, splitobs
 using ProgressMeter
 using Random; rng = Random.default_rng()
 using Printf
@@ -209,7 +210,7 @@ ps, st = train(;loss_data,
                 print_freq=10, 
                 n_epochs= 100, 
                 batchsize=256, 
-                train_split=0.9)
+                train_split=0.7)
 
 score = score_model(model, ps, st, sol_rasters, pred_all_time)
 @printf "Score model without mech. constraintss: %.2f\n" score
@@ -225,7 +226,7 @@ ps, st = Lux.setup(rng, model)
 pmech = ComponentArray(m = 0.05, α = 4., T0=4.)
 model_mech =  build_dyn_model(landscape, pmech)
 
-opt = Adam(2e-3)
+opt = Adam(5e-3)
 ps, st = train(;loss_data, 
                 loss_mech = (m, ps, st, data) -> loss_mech(m, 
                                                         ps, 
@@ -241,7 +242,7 @@ ps, st = train(;loss_data,
                 print_freq=10, 
                 n_epochs= 100, 
                 batchsize=256, 
-                train_split=0.9)
+                train_split=0.7)
 
 score = score_model(model, ps, st, sol_rasters, pred_all_time)
 @printf "Score model with mech. constraints: %.2f\n" score
