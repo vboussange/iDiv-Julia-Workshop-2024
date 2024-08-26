@@ -13,13 +13,14 @@ md"""
 
 The geodata ecosystem in Julia has matured a lot, but is not in a fully stable state yet.
 
-My geodata skills are pretty basic, but here is what I know...
 """
 
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "fragment"}}
 md"""
-My stack:
+A brief overview of a problematic situation:
+- [YAXArrays.jl](https://github.com/JuliaDataCubes/YAXArrays.jl) named multidimensional arrays
 - [Raster.jl](https://github.com/rafaqz/Rasters.jl) for raster data (geotiff, Netcdf, ascii-grid, etc)
+- [DimensionalData.jl](https://github.com/rafaqz/DimensionalData.jl) shared backend for Rasters.jl and YAXArrays.jl
 - [Shapefile.jl](https://github.com/JuliaGeo/Shapefile.jl) for, you guessed, shapefiles
 - [ArchGDAL.jl](https://github.com/yeesian/ArchGDAL.jl) for interactions with the GDAL lib
 - [Proj4.jl](https://github.com/JuliaGeo/Proj.jl) for map projections
@@ -38,9 +39,9 @@ md"""
 
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "slide"}}
 md"""
-## Raster data
+## Named multidimensional data
 
-(a good tutorial https://github.com/xKDR/datascience-tutorials)
+(a good in depth tutorial https://github.com/JuliaDataCubes/datacubes_in_julia_workshop)
 
 First download some data:
 """
