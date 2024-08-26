@@ -499,8 +499,9 @@ below.
 > learned during training but are set by the user before training. The
 > hyperparameters define the structure and behavior of the neural
 > network and influence how the model learns from the input data. Some
-> resources: -
-> [Hyperopt.jl](https://github.com/baggepinnen/Hyperopt.jl).
+> resources:
+>
+> -   [Hyperopt.jl](https://github.com/baggepinnen/Hyperopt.jl).
 >
 > -   [A Conceptual Explanation of Bayesian Hyperparameter Optimization
 >     for Machine
