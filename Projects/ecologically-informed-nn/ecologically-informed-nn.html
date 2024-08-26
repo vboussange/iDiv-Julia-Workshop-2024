@@ -20,6 +20,7 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { line-height: 1.25; }
@@ -68,49 +69,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="ecologically-informed-nn_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="ecologically-informed-nn_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
-  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
-  <script>document.addEventListener("DOMContentLoaded", function () {
- var mathElements = document.getElementsByClassName("math");
- var macros = [];
- for (var i = 0; i < mathElements.length; i++) {
-  var texText = mathElements[i].firstChild;
-  if (mathElements[i].tagName == "SPAN") {
-   katex.render(texText.data, mathElements[i], {
-    displayMode: mathElements[i].classList.contains('display'),
-    throwOnError: false,
-    macros: macros,
-    fleqn: false
-   });
-}}});
-  </script>
-  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -191,32 +149,23 @@ window.Quarto = {
 <p>The different work packages below can be addressed independently and distributed among different teams. The team could collaborate on a public repository.</p>
 <section id="wp-a-process-based-model" class="level3">
 <h3 class="anchored" data-anchor-id="wp-a-process-based-model"><strong>WP A</strong>: Process-based model</h3>
-<p>The goal is to construct a model which simulates the dynamics of species abundance on a landscape. Given a landscape consisting of <span class="math inline">P</span> patches <span class="math inline">\{p_1, \dots, p_P \}</span>, we want to model the dynamics of the population abundance vector <span class="math inline">{\bf n}_{t} = (n_{1, t}, \dots, n_{P, t})</span> where <span class="math inline">n_{i, t}</span> corresponds to the population density on <span class="math inline">p_i</span>.</p>
+<p>The goal is to construct a model which simulates the dynamics of species abundance on a landscape. Given a landscape consisting of <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20P" alt="P" title="P" class="math inline"> patches <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%5C%7Bp_1%2C%20%5Cdots%2C%20p_P%20%5C%7D" alt="\{p_1, \dots, p_P \}" title="\{p_1, \dots, p_P \}" class="math inline">, we want to model the dynamics of the population abundance vector <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%7B%5Cbf%20n%7D_%7Bt%7D%20%3D%20%28n_%7B1%2C%20t%7D%2C%20%5Cdots%2C%20n_%7BP%2C%20t%7D%29" alt="{\bf n}_{t} = (n_{1, t}, \dots, n_{P, t})" title="{\bf n}_{t} = (n_{1, t}, \dots, n_{P, t})" class="math inline"> where <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20n_%7Bi%2C%20t%7D" alt="n_{i, t}" title="n_{i, t}" class="math inline"> corresponds to the population density on <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_i" alt="p_i" title="p_i" class="math inline">.</p>
 <p>We will assume that the population experiences a logistic growth, and that it is subject to dispersal. We will use a difference equation model to express these processes</p>
-<p><span class="math display">
-n_{i, t+1} = n_{i, t} + [F({\bf n_t})]_i,
-</span> where <span class="math display">
-[F({\bf n_t})]_i  = \mathcal{E}(n_{i, t}) + [\mathcal{D}({\bf n_t})]_i.
-</span> Here, <span class="math inline">\mathcal{E}</span> coresponds to the ecological dynamics, <span class="math display">
-\mathcal{E}(n_{i, t}) = n_{i, t}(1 - \frac{n_{i, t}}{K_i})
-</span> with <span class="math inline">K_i</span> the carrying capacity on patch <span class="math inline">p_i</span>, and where <span class="math inline">\mathcal{D}</span> is the dispersal kernel <span class="math display">
-[\mathcal{D}({\bf n_t})]_i = \left[ \sum_j  u_{j, t} m_{j, i} - \sum_j  u_{i, t} m_{i, j}\right]
-</span></p>
-<p>with <span class="math inline">m_{j,i}</span> the proportion of individuals migrating from <span class="math inline">p_j</span> to <span class="math inline">p_i</span>. The first term corresponds to incoming individuals, the second to leaving individuals.</p>
+<p><img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20n_%7Bi%2C%20t%2B1%7D%20%3D%20n_%7Bi%2C%20t%7D%20%2B%20%5BF%28%7B%5Cbf%20n_t%7D%29%5D_i%2C" alt="n_{i, t+1} = n_{i, t} + [F({\bf n_t})]_i," title="n_{i, t+1} = n_{i, t} + [F({\bf n_t})]_i," class="math display"> where <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20%5BF%28%7B%5Cbf%20n_t%7D%29%5D_i%20%20%3D%20%5Cmathcal%7BE%7D%28n_%7Bi%2C%20t%7D%29%20%2B%20%5B%5Cmathcal%7BD%7D%28%7B%5Cbf%20n_t%7D%29%5D_i." alt="[F({\bf n_t})]_i  = \mathcal{E}(n_{i, t}) + [\mathcal{D}({\bf n_t})]_i." title="[F({\bf n_t})]_i  = \mathcal{E}(n_{i, t}) + [\mathcal{D}({\bf n_t})]_i." class="math display"> Here, <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%5Cmathcal%7BE%7D" alt="\mathcal{E}" title="\mathcal{E}" class="math inline"> coresponds to the ecological dynamics, <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20%5Cmathcal%7BE%7D%28n_%7Bi%2C%20t%7D%29%20%3D%20n_%7Bi%2C%20t%7D%281%20-%20%5Cfrac%7Bn_%7Bi%2C%20t%7D%7D%7BK_i%7D%29" alt="\mathcal{E}(n_{i, t}) = n_{i, t}(1 - \frac{n_{i, t}}{K_i})" title="\mathcal{E}(n_{i, t}) = n_{i, t}(1 - \frac{n_{i, t}}{K_i})" class="math display"> with <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20K_i" alt="K_i" title="K_i" class="math inline"> the carrying capacity on patch <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_i" alt="p_i" title="p_i" class="math inline">, and where <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%5Cmathcal%7BD%7D" alt="\mathcal{D}" title="\mathcal{D}" class="math inline"> is the dispersal kernel <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20%5B%5Cmathcal%7BD%7D%28%7B%5Cbf%20n_t%7D%29%5D_i%20%3D%20%5Cleft%5B%20%5Csum_j%20%20u_%7Bj%2C%20t%7D%20m_%7Bj%2C%20i%7D%20-%20%5Csum_j%20%20u_%7Bi%2C%20t%7D%20m_%7Bi%2C%20j%7D%5Cright%5D" alt="[\mathcal{D}({\bf n_t})]_i = \left[ \sum_j  u_{j, t} m_{j, i} - \sum_j  u_{i, t} m_{i, j}\right]" title="[\mathcal{D}({\bf n_t})]_i = \left[ \sum_j  u_{j, t} m_{j, i} - \sum_j  u_{i, t} m_{i, j}\right]" class="math display"></p>
+<p>with <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20m_%7Bj%2Ci%7D" alt="m_{j,i}" title="m_{j,i}" class="math inline"> the proportion of individuals migrating from <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_j" alt="p_j" title="p_j" class="math inline"> to <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_i" alt="p_i" title="p_i" class="math inline">. The first term corresponds to incoming individuals, the second to leaving individuals.</p>
 <section id="ecology" class="level4">
 <h4 class="anchored" data-anchor-id="ecology">Ecology</h4>
-<p>We will assume that <span class="math display">
-K_{i} = e^{-\kappa(T_i - T^\star)^2}
-</span> where <span class="math inline">T_i</span> is the temperature on patch <span class="math inline">p_i</span>, <span class="math inline">T^\star</span> is the optimal temperature for the species, and <span class="math inline">\kappa</span> defines how the carrying capacity decreases under sub-optimal conditions.</p>
+<p>We will assume that <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20K_%7Bi%7D%20%3D%20e%5E%7B-%5Ckappa%28T_i%20-%20T%5E%5Cstar%29%5E2%7D" alt="K_{i} = e^{-\kappa(T_i - T^\star)^2}" title="K_{i} = e^{-\kappa(T_i - T^\star)^2}" class="math display"> where <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20T_i" alt="T_i" title="T_i" class="math inline"> is the temperature on patch <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_i" alt="p_i" title="p_i" class="math inline">, <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20T%5E%5Cstar" alt="T^\star" title="T^\star" class="math inline"> is the optimal temperature for the species, and <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%5Ckappa" alt="\kappa" title="\kappa" class="math inline"> defines how the carrying capacity decreases under sub-optimal conditions.</p>
 </section>
 <section id="dispersal" class="level4">
 <h4 class="anchored" data-anchor-id="dispersal">Dispersal</h4>
-<p>We will assume that <span class="math display">
-m_{i,j} = \begin{cases}
+<p>We will assume that <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20m_%7Bi%2Cj%7D%20%3D%20%5Cbegin%7Bcases%7D%20%0Am%20%5C%2C%20e%5E%7B-d_%7Bi%2Cj%7D%2F%5Calpha%7D%2C%20%26%20%5Ctext%7Bif%20%7D%20i%20%5Cneq%20j%20%5C%5C%0A0%2C%20%26%20%5Ctext%7Bif%20%7D%20i%20%3D%20j%20%0A%5Cend%7Bcases%7D" alt="m_{i,j} = \begin{cases} 
 m \, e^{-d_{i,j}/\alpha}, &amp; \text{if } i \neq j \\
-0, &amp; \text{if } i = j
-\end{cases}
-</span> where <span class="math inline">m</span> is the migration rate and <span class="math inline">d_{i,j}</span> is the distance between <span class="math inline">p_i</span> and <span class="math inline">p_j</span>.</p>
+0, &amp; \text{if } i = j 
+\end{cases}" title="m_{i,j} = \begin{cases} 
+m \, e^{-d_{i,j}/\alpha}, &amp; \text{if } i \neq j \\
+0, &amp; \text{if } i = j 
+\end{cases}" class="math display"> where <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20m" alt="m" title="m" class="math inline"> is the migration rate and <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20d_%7Bi%2Cj%7D" alt="d_{i,j}" title="d_{i,j}" class="math inline"> is the distance between <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_i" alt="p_i" title="p_i" class="math inline"> and <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20p_j" alt="p_j" title="p_j" class="math inline">.</p>
 <div class="callout callout-style-default callout-warning no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -376,7 +325,7 @@ Dispersal kernel
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>disp_proximities <span class="op">=</span> <span class="fu">sparse</span>(<span class="fu">disp_kern</span>.(landscape.dists)) <span class="co"># we transform the distances in proximities</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>D <span class="op">=</span> <span class="op">-</span> m <span class="op">*</span> (I <span class="op">-</span> (disp_proximities <span class="op">./</span> <span class="fu">sum</span>(disp_proximities,dims<span class="op">=</span><span class="fl">1</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Now you need to convince yourself that <code>D * u</code> exactly equals <span class="math inline">\mathcal{D}({\bf n}_t)</span>.</p>
+<p>Now you need to convince yourself that <code>D * u</code> exactly equals <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%5Cmathcal%7BD%7D%28%7B%5Cbf%20n%7D_t%29" alt="\mathcal{D}({\bf n}_t)" title="\mathcal{D}({\bf n}_t)" class="math inline">.</p>
 </div>
 </div>
 </div>
@@ -428,11 +377,9 @@ You could consider any sort of model, but here are some examples
 </section>
 <section id="wp-b-constructing-a-deep-sdm-in-julia" class="level3">
 <h3 class="anchored" data-anchor-id="wp-b-constructing-a-deep-sdm-in-julia"><strong>WP B</strong>: Constructing a deep SDM in Julia</h3>
-<p>The goal is to construct a deep SDM <span class="math inline">\text{NN}</span> which can predict the species distribution at time <span class="math inline">t</span>, given an array of absence-presence observations.</p>
-<p><span class="math display">
-\hat y = \text{NN}(\text{long},\text{lat},E,t)
-</span></p>
-<p>Given that the species range changes over time, spatial coordinates <span class="math inline">(long, lat)</span>, environmental predictors <span class="math inline">E</span> (for this exercise, we’ll use <code>bio1</code> from CHELSA), and time <span class="math inline">t</span> will be used as inputs to the SDM.</p>
+<p>The goal is to construct a deep SDM <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%5Ctext%7BNN%7D" alt="\text{NN}" title="\text{NN}" class="math inline"> which can predict the species distribution at time <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20t" alt="t" title="t" class="math inline">, given an array of absence-presence observations.</p>
+<p><img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20%5Chat%20y%20%3D%20%5Ctext%7BNN%7D%28%5Ctext%7Blong%7D%2C%5Ctext%7Blat%7D%2CE%2Ct%29" alt="\hat y = \text{NN}(\text{long},\text{lat},E,t)" title="\hat y = \text{NN}(\text{long},\text{lat},E,t)" class="math display"></p>
+<p>Given that the species range changes over time, spatial coordinates <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20%28long%2C%20lat%29" alt="(long, lat)" title="(long, lat)" class="math inline">, environmental predictors <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20E" alt="E" title="E" class="math inline"> (for this exercise, we’ll use <code>bio1</code> from CHELSA), and time <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20t" alt="t" title="t" class="math inline"> will be used as inputs to the SDM.</p>
 <div class="callout callout-style-default callout-warning no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -742,9 +689,7 @@ Loss function
 </div>
 <div class="callout-body-container callout-body">
 <p>The extended loss could have the form</p>
-<p><span class="math display">
-\mathcal{L} = \sum_i l(\hat{y_{i,t_i}}, y_{i,t_i}) + \sum_{i,j} \left[\hat y_{i, t_{j+1}} - [F({\bf \hat y}_{t_j})]_i\right]^2
-</span> where <span class="math inline">l</span> is the binary cross entropy loss.</p>
+<p><img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Cdisplaystyle%20%5Cmathcal%7BL%7D%20%3D%20%5Csum_i%20l%28%5Chat%7By_%7Bi%2Ct_i%7D%7D%2C%20y_%7Bi%2Ct_i%7D%29%20%2B%20%5Csum_%7Bi%2Cj%7D%20%5Cleft%5B%5Chat%20y_%7Bi%2C%20t_%7Bj%2B1%7D%7D%20-%20%5BF%28%7B%5Cbf%20%5Chat%20y%7D_%7Bt_j%7D%29%5D_i%5Cright%5D%5E2" alt="\mathcal{L} = \sum_i l(\hat{y_{i,t_i}}, y_{i,t_i}) + \sum_{i,j} \left[\hat y_{i, t_{j+1}} - [F({\bf \hat y}_{t_j})]_i\right]^2" title="\mathcal{L} = \sum_i l(\hat{y_{i,t_i}}, y_{i,t_i}) + \sum_{i,j} \left[\hat y_{i, t_{j+1}} - [F({\bf \hat y}_{t_j})]_i\right]^2" class="math display"> where <img style="vertical-align:middle" src="https://latex.codecogs.com/svg.latex?%5Ctextstyle%20l" alt="l" title="l" class="math inline"> is the binary cross entropy loss.</p>
 </div>
 </div>
 <!-- 
