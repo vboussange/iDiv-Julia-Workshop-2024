@@ -1,64 +1,52 @@
-# Exercise: managing a Julia research project
+# Exercise: starting a Julia research project
 
-In this exercise, we'll explore how the relationship between the size of a tree and the amount of carbon it stores changes from one species to the other. We'll use a simple linear regression model to estimate the slope of the relationship, and compare it throughout the species investigated.
+In this exercise, you will download some data and play around with setting up your project and writing simple functions/scripts to analyse it.
 
-### Requirements
+## Recommended steps
 
-#### Part 1: Package management
+### Part 1: Set up your project
 
-- Activate your environment, and install the following dependencies
-  - `GLM`
-  - `DataFrames`
-  - `CSV`
-
-#### Part 2: project management
-
-- Create a new project directory and set up the following directory structure
+- Set up your project. You can do it by:
+  - Forking/cloning the "computational notebooks" repo ([here](https://github.com/FellowsFreiesWissen/computational_notebooks/tree/file_struct2))
+  - Download `set_kit.jl` only ([here](https://github.com/FellowsFreiesWissen/computational_notebooks/tree/file_struct2)) 
+  - Write your own file structure, for example:
 
 ```css
 my_project/
 ├── src/
-│   └── regression_functions.jl
 ├── tests/
-│   └── test_regression_functions.jl
 ├── data/
-│   └── species1.csv
-│   └── species2.csv
+├──── metadata/
 ├── results/
-├── Manifest.toml
-├── Project.toml
-├── .gitignore
-├── run_code.sh
-└── my-analysis.jl
+└── my-analysis /* this can be a "master" script (.jl) or a notebook (.ipynb) */
 ```
 
-- In the `src/regression_functions.jl`, create a function `linear_regression` that takes in a string corresponding to the location of a CSV file, and outputs the slope associated p-value of the linear regression between `tree_size` and `carbon_content` variables in the CSV.
+- Optional: If you see yourself using scripts and not notebooks, alter `set_kit.jl` to add a `run_code.sh` file to the current file structure it creates. (Or create it manually, of course.)
 
-> **Hints**
-> 
-> The slope of a `GLM` model may be retrieved as   
->
-> `slope = GLM.coeftable(model).cols[1][2]`
->
-> And its p-value as 
-> 
-> `pval = GLM.coeftable(model).cols[4][2]`
-    
-- Create a unit test for `linear_regression` in `test/regression_functions.jl`
-  - Use the `Test` module
+### Part 2: Package management
 
-- In `my-analysis.jl` file, write a Julia script that
-  - loads the necessary packages
-  - loads the functions in `src/regression_functions.jl` 
-  - creates an empty `DataFrame`
-    - ```julia
-      df_results = DataFrame(species_name = [], slope = [], pval = [])
-      ```
-  - loops through the CSV files, runs for each a linear regression using `linear_regression`, and pushes the results to the `DataFrame`
-    - Make sure to print some logging information, e.g. `println("processing ", csv_filename)`
-  - exports the dataframe as a CSV file in the result folder
+- Activate your environment, and install the following dependencies
+  - `Plots`
+  - `GLM`
+  - `DataFrames`
+  - `CSV`
 
-- Use a shell script to run `my-analysis.jl`
+### Get the data
+
+Download 5 years of plant phenological data from the PhenObs project:
+
+- [Data from 2017-2018](https://doi.org/10.25829/idiv.1877-4-3160)
+- [Data from 2019](https://doi.org/10.25829/idiv.3519-a6r94f)
+- [Data from 2020](https://doi.org/10.25829/idiv.3535-6j8cmx)
+- [Data from 2021](https://doi.org/10.25829/idiv.3536-o94ra8)
+- [Data from 2022](https://doi.org/10.25829/idiv.3550-m3qf86)
+
+**Important**: Don't forget to store the metadata and to check it's licenses.
+
+### Plot and analyse it
+
+Here are some prompts from your to try:
 
 ## Solutions
+
 You may find the solutions in the `my_project_solutions/` folder.
