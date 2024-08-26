@@ -11,7 +11,7 @@ format:
         toc: true
         toc-depth: 4
         toc-expand: 2
-        html-math-method: katex
+        # html-math-method: gladtex
     md: default
 editor:
   render-on-save: true
