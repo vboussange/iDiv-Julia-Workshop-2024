@@ -1,0 +1,1 @@
+This folder contains all code used to process the data, and which, for some reason or another is not included in the notebook because they too cumbersome or not of upmost relevancy for comprehension.
