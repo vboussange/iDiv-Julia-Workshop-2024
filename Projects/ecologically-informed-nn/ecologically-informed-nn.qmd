@@ -10,7 +10,8 @@ format:
     html:
         toc: true
         toc-depth: 4
-        # toc-expand: 2
+        toc-expand: 2
+    md: default
 editor:
   render-on-save: true
 ---
@@ -226,6 +227,14 @@ This structure will ensure easy access to `K` and `D`, while storing the landsca
 
 :::
 
+::: {.callout-warning icon="false"}
+# Optional task: model differentiability and mechanistic inference
+
+- Is your model differentiable? Try whether you can obtain the derivative of its output with respect to its parameters. A good idea is to embed the model's parameters in a `ComponentArray`.
+
+- Once the model is differentiable, generate data and use `Optimisers.jl` to find back the parameters that have generated the data.
+:::
+
 <!-- 
 You could consider any sort of model, but here are some examples
 - The discrete reaction diffusion model from [Bonneau et al. 2017](https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecs2.1979), where individuals experience a logistic growth with a locally defined carrying capacity $K_i$ that depends on the landscape characteristics, and where some individuals disperse to neighboring vertices.
@@ -302,7 +311,7 @@ You may use this dataset to evaluate your model, but not for training! -->
 
 
 ::: {.callout-tip collapse="true"}
-# 🆘 Loading and pre-processing the absence-presence data
+# 🆘 *Advanced help*: loading and pre-processing the absence-presence data
 - To normalize `data` (a DataFrame), you can use
 ```julia
 standardizer = machine(Standardizer(), data)
@@ -331,7 +340,7 @@ Create a Multi-Layer Perceptron (MLP) using `Lux.Chain` with `Dense` layers. Con
 :::
 
 ::: {.callout-tip collapse="true"}
-# 🆘 Neural network architecture and loss
+# 🆘 *Advanced help*: Neural network architecture and loss
 - Consider using the following function to create your model.
 
 ```julia
@@ -436,6 +445,7 @@ plot(urast)
 
 Hyperparameters of a neural network model are parameters that are not learned during training but are set by the user before training. The hyperparameters define the structure and behavior of the neural network and influence how the model learns from the input data. 
 Some resources:
+
 - [Hyperopt.jl](https://github.com/baggepinnen/Hyperopt.jl).
 
 - [A Conceptual Explanation of Bayesian Hyperparameter Optimization for Machine Learning](https://towardsdatascience.com/a-conceptual-explanation-of-bayesian-model-based-hyperparameter-optimization-for-machine-learning-b8172278050f)
@@ -443,7 +453,7 @@ Some resources:
 
 :::
 
-#### **WP C**: Ecologically-informed neural network
+### **WP C**: Ecologically-informed neural network
 
 The objective is to improve the performance of the deep SDM by additionally constraining it with a process-based model.
 
@@ -451,12 +461,27 @@ The objective is to improve the performance of the deep SDM by additionally cons
 :::::: {.callout-warning icon="false"}
 # Your task
 
-Extend the `loss` function used to train the the deep SDM developed in **B** by constraining it with the process-based model developed in **A**. The extended loss should have the form
+Extend the `loss` function used to train the deep SDM developed in **WP B** by constraining it with the process-based model developed in **WP A**. Assume perfect knowledge of the dynamics of the species (i.e., use the process-based model with true generating parameters, see **WP A**). 
+:::
+
+:::::: {.callout-warning icon="false"}
+# Advanced task
+
+Now assume that you only have partial knowledge of the dynamics (i.e., you know the function form of the dynamical system, but not the true parameter values). You'll need to consider the parameters of the mechanistic model as additional parameters to be learnt, on top of that of the deep SDM.
+:::
+
+#### Hints
+
+::: {.callout-tip icon="false"}
+# Loss function
+
+The extended loss could have the form
 
 $$
 \mathcal{L} = \sum_i l(\hat{y_{i,t_i}}, y_{i,t_i}) + \sum_{i,j} \left[\hat y_{i, t_{j+1}} - [F({\bf \hat y}_{t_j})]_i\right]^2
 $$
 where $l$ is the binary cross entropy loss.
+
 :::
 
 <!-- 
