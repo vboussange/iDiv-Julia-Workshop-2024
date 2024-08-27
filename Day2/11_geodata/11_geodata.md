@@ -8,151 +8,157 @@ using Pkg; Pkg.instantiate()
 
 The geodata ecosystem in Julia has matured a lot, but is not in a fully stable state yet.
 
-My geodata skills are pretty basic, but here is what I know...
-
-My stack:
+A brief overview of a problematic situation:
+- [YAXArrays.jl](https://github.com/JuliaDataCubes/YAXArrays.jl) named multidimensional arrays
 - [Raster.jl](https://github.com/rafaqz/Rasters.jl) for raster data (geotiff, Netcdf, ascii-grid, etc)
+- [DimensionalData.jl](https://github.com/rafaqz/DimensionalData.jl) shared backend for Rasters.jl and YAXArrays.jl
 - [Shapefile.jl](https://github.com/JuliaGeo/Shapefile.jl) for, you guessed, shapefiles
 - [ArchGDAL.jl](https://github.com/yeesian/ArchGDAL.jl) for interactions with the GDAL lib
 - [Proj4.jl](https://github.com/JuliaGeo/Proj.jl) for map projections
-
-## Geo Ecosystem
 
 - https://juliageo.org/ -- biggest geo-group
 - https://github.com/JuliaEarth -- for geostatistics
 - https://ecojulia.org/ -- (spatial)ecology
 - https://github.com/GenericMappingTools/GMT.jl (for Huw)
 
-## Raster data
+## Named multidimensional data
 
-(a good tutorial https://github.com/xKDR/datascience-tutorials)
+This tutorial has been adapted from various sources such as:
+- YAXArrays docs
+- https://github.com/JuliaDataCubes/datacubes_in_julia_workshop
 
-First download some data:
+Let's start to get aquainted with YAXArrays:
 
 ````julia
-using Downloads # ships with Julia
-using Rasters, ZipFile
-mkpath("data")
-# download if not already downloaded
-!isfile("data/dhm200.zip") && Downloads.download("https://data.geo.admin.ch/ch.swisstopo.digitales-hoehenmodell_25/data.zip", "data/dhm200.zip")
-# this extracts the file we want from the zip-file (yep, a bit complicated)
-zip = ZipFile.Reader("data/dhm200.zip")
-write("data/dhm200.asc", read(zip.files[1]))
-close(zip)
+using YAXArrays
 
-ra = Raster("data/dhm200.asc")
+yaxa_rand = YAXArray(rand(5, 10))
 ````
 
-### Plot raster
+So far nothing magical has happened, why do we need a whole new package?
+If we want to create a `YAXArray` with named dimension we need the following:
+- axes or dimensions with names and tick values
 
 ````julia
-using Plots
-plotly()  # use the Plotly.jl backend, this allows zooming withing the Jupyter notebook
-plot(ra, ticks=:native,   # thus Rasters.jl provides a plot-receipt and plotting is easy
-     size=(1000,700),     # make it bigger
-     max_res=2000)        # Rasters downsamples before plotting to make plotting faster.  Max number of gridpoints
+using DimensionalData
+
+axlist = (
+    Dim{:time}(range(1, 20, length=20)),
+    X(range(1, 10, length=10)),
+    Y(range(1, 5, length=15)),
+    Dim{:variable}(["temperature", "precipitation"])
+)
 ````
 
-### Index raster
-
-Rasters have powerful (but also complicated) indexing capabilities.
-
-See https://rafaqz.github.io/Rasters.jl/stable/
+- the data to feed to the `YAXArray` matching the dimensions defined in the axlist:
 
 ````julia
-ra[5,6] # index the underlying matrix normally
+data = rand(20, 10, 15, 2)
+````
 
-ra[X(Near(600000)), Y(Near(250876))]     # shows where the x-y are
+- and additionally some metadata:
+
+````julia
+props = Dict(
+    "origin" => "YAXArrays.jl example",
+    "x" => "longitude",
+    "y" => "latitude",
+);
+
+a2 = YAXArray(axlist, data, props)
+````
+
+We can now access our `YAXArray` at any variable or time point we want:
+
+````julia
+a2[variable=At("temperature"), time=1].data
+````
+
+### Reading data
+
+In order to read specific data types (Zarr, NetCDF, etc...) we need to load the necessary backend first:
+
+````julia
+using Zarr
+
+bucket = "esdl-esdc-v3.0.2"
+store = "esdc-16d-2.5deg-46x72x1440-3.0.2.zarr"
+path = "https://s3.bgc-jena.mpg.de:9000/" * bucket * "/" * store
+c = Cube(open_dataset(zopen(path,consolidated=true,fill_as_missing=true)))
+````
+
+### Operations on data
+
+Like normal arrays you can modify the data performing simple arithmetics. Additional operations can be performed in different levels of complexity:
+- using `map`: applies functions to each element of an array
+- using `mapslices`: reduce dimensions
+- using `mapCube`: applies functions to an array that may change dimensions
+
+````julia
+yaxa_rand.data
 ````
 
 ````julia
-ra[X(Near(600000)), Y(Near(250876))][1]  # index with the [1] to get the value out
+add_yaxa = yaxa_rand .+ 5
+add_yaxa.data
 ````
 
-````julia
-ra[X(500000..550000), Y(130000..150000)] # a range
-````
-
-### Other raster operations
-
-resample, mosaic, crop...
-
-See the [docs](https://rafaqz.github.io/Rasters.jl/stable/#Methods-that-change-the-reslolution-or-extent-of-an-object)
-
-### Rasters can be used like normal arrays
-
-Example play game of life.
+Let's apply more complex functions with `map` to each element of the array individually:
 
 ````julia
-grid = ra .> 1000 # all cells above 1000m a.s.l. are alive
-include("game-of-life.jl") # load the file with the GOL functions
-for i=1:5; update_grid!(grid) end # run 5 iterations
-plot(grid)  # note that grid is still a Raster
-````
-
-### Shapefiles
-
-Shapefiles contain vector polygons (and such)
-
-First, download and extract data about zip-code (PLZ) areas in Switzerland
-
-````julia
-!isfile("data/plz.zip") && Downloads.download("https://data.geo.admin.ch/ch.swisstopo-vd.ortschaftenverzeichnis_plz/PLZO_SHP_LV03.zip", "data/plz.zip")
-zip = ZipFile.Reader("data/plz.zip")
-for f in zip.files
-    name = basename(f.name)
-    if startswith(name, "PLZO_PLZ")
-        write("data/$(name)", read(f))
-    end
+offset = 5
+map(a2) do x
+    (x + offset) / 2 * 3
 end
-close(zip)
 ````
 
-### Shapefiles
+This computation happens lazily, allowing operations to run fast.
 
-Read it and select Zermatt (3920)
+Now let's see how we can apply external functions to the data:
 
 ````julia
-using Shapefile
-tab = Shapefile.Table("data/PLZO_PLZ.shp")
-
-zermatt = findfirst(tab.PLZ.==3920)
-plot(tab.geometry[zermatt])
+import Statistics: mean
+a2_timemean = mapslices(mean, a2, dims="Time")
 ````
 
-### Shapefiles & DataFrames
-
-Shapefiles contain tables of attributes which can be handled with DataFrames, if so desired
+We computed the average value of the points in time, so no time variable is present in the final cube.
+Similartly we can compute the spatial means in one value per time step:
 
 ````julia
-using DataFrames
-DataFrame(tab)
+a2_spacemean = mapslices(mean, a2, dims=("X", "Y"))
 ````
 
-### Shapefiles polygons
+Now to the most flexible way to apply a function: `mapCube`. With it you can directly modify dimension, adding or removing them
 
-Shapefiles contain polygons, the can be accessed with:
+Let's use the esdc and apply the median function:
 
 ````julia
-shp = Shapefile.shapes(tab)
-poly = shp[1]
-Rasters.GeoInterface.coordinates.(poly.points) # points in a vector
+using Statistics
+indims = InDims("time")
+outdims = OutDims()
+function apply_median(xout, xin)
+    x = filter(!ismissing, xin)
+    x = filter(!isnan,x)
+
+    xout[] = isempty(x) ? missing : median(x)
+end
 ````
 
-### Crop and mask raster
-
-Read it and select Zermatt (3920)
+See how the user defined function passed to mapCube has to have the signature f(outputs..., inputs...) and potentially followd by additional arguments and keyword args.
 
 ````julia
-ra_z = crop(ra; to = tab.geometry[zermatt])
-mask_z = mask(ra_z, with = tab.geometry[zermatt])
-plot(mask_z)
+medians = mapCube(apply_median, c[Variable=Where(contains("temp"))];indims, outdims)
 ````
 
 # Exercise
 
-- Download the Swiss Glacier Inventory 2016 from https://www.glamos.ch/en/downloads#inventories/B56-03
-- look up Gornergletscher
-- plot it into the last plot we just did
-- mask the elevation map with the Gornergletscher outline and calculate the mean elevation
+- Load "bands.zarr"
+- Define some spectral indices calulations for your favourite indices. Keep in mind that we have the following bands:
+  - B02 (Band 2): Blue (approximately 490 nm)
+  - B03 (Band 3): Green (approximately 560 nm)
+  - B04 (Band 4): Red (approximately 665 nm)
+  - B08 (Band 8): Near Infrared (NIR) (approximately 842 nm)
+The results are given leveraging the NDVI = (N-R)/(N+R)
+- If you use NDVI you have to divide the data by 10000 to get it in the expected range.
+- Apply this calculations to the data in the cube. Use a naive approach, `map` and `mapCube`. Are the results equivalent?
 
