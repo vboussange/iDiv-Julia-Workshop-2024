@@ -1,9 +1,5 @@
 #=
-Test of a dynamical SDM
-1. we import a raster file, which defines the domain over which we solve the dynamical SDM
-2. from this raster file, we define a graph, which defines how species can move
-3. We simulate dynamics on this graph
-4. We plot the dynamics 
+This script simulates a `DynSDM` model
 =#
 using Graphs, SimpleWeightedGraphs
 using SparseArrays

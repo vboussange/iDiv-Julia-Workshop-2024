@@ -59,13 +59,11 @@ function graph_matrix_from_raster(
 end
 
 """
-    Landscape{R,M,AT,D,ID}
-Contains a permeability raster, from which is derived a graph representing
-distance to closest neighbour, correpsonding to adjacency matrix A. This matrix
-is used to calculate a distance matrix. The permeability raster may contain
-pixels which are not suited at all for the considered species, so that these
-pixels are discarded. The mapping between the landscape graph and the raster is
-ensured by `id_to_grid_coordinate_list`.
+    Landscape{R,M,D,ID}
+Contains a raster, from which is derived a graph representing distance to
+closest neighbour. This graph is used to calculate a distance matrix. The
+mapping between the landscape graph and the raster is ensured by
+`id_to_grid_coordinate_list`.
 """
 struct Landscape{R,M,D,ID}
     raster::R
@@ -107,7 +105,7 @@ end
 
 """
     load_raster()
-Loads Chelsa bio1 data as a Rasters.Raster.
+Loads Chelsa `bio1` data as a Rasters.Raster.
 """
 function load_raster()
     env_data = Raster(CHELSA{BioClim}, :bio1; version=2, replace_missing=true)[X(6..6.3), Y(45..45.3)]
@@ -117,7 +115,6 @@ end
 
 """
     largest_subgraph(graph)
-
     
 Returns largest strongly connected subgraph from graph
 """

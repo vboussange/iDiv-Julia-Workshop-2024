@@ -24,11 +24,10 @@ struct DynSDM{LD,KK,DD}
 end
 
 """
-    (model::DynSDM)(u, p)
+    (model::DynSDM)(u)
     
-Returns the change in abundance during a single time step, based on
-`model.ecological_dynamics` and dispersal process, calculated based on
-`model.landscape` and `p.m` (migration rate).
+Returns the change in abundance during a single time step, based on `model.K`
+defining carrying capacity and `model.D` defining dispersal process.
 """
 function (model::DynSDM)(u::Vector{T}) where T
     @unpack D, K = model
@@ -37,9 +36,9 @@ function (model::DynSDM)(u::Vector{T}) where T
 end
 
 """
-    build_dyn_model(land)
-Builds a `DynSDM` dynamical model. This model can be simulated with the
-`simulate` or `step` functions.
+    build_dyn_model(land, p)
+Builds a `DynSDM` dynamical model defined from a landscape `land` and parameters `p`. This model
+can be simulated with the `simulate` or `step` functions.
 """
 function build_dyn_model(landscape::Landscape, p)
     @unpack T0, α, m = p
@@ -53,10 +52,9 @@ end
 
 
 """
-    step(model::DynSDM, u0, p)
+    step(model::DynSDM, u0)
 
-Performs one step ahead prediction with a `DynSDM` model, based on `u0` and
-model parametr `p`.
+Performs one step ahead prediction with a `DynSDM` model, based on `u0`.
 """
 function step(model::DynSDM, u0)
     u = u0 + model(u0)
@@ -64,13 +62,12 @@ function step(model::DynSDM, u0)
 end
 
 """
-    simulate(model::DynSDM, u0, ntsteps, p)
+    simulate(model::DynSDM, u0, ntsteps)
 
-Performs `ntsteps` ahead prediction with a `DynSDM` model, based on `u0` and
-model parametr `p`. Predictions returned as a vector with entry `i`
-corresponding to step `i`.
+Performs `ntsteps` ahead prediction with a `DynSDM` model, based on `u0`.
+Predictions returned as a vector with entry `i` corresponding to step `i`.
 """
-function simulate(model::DynSDM, u0, ntsteps, p)
+function simulate(model::DynSDM, u0, ntsteps)
     us = [similar(u0) for i in 1:ntsteps+1]
     us[1] .= u0
     for i in 2:ntsteps+1

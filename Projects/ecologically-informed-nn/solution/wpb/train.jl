@@ -11,6 +11,14 @@ Random.seed!(rng, 1234)
 
 include(@__DIR__() * "/../wpa/dynamical_model.jl")
 
+"""
+    build_model(; npred, hidden_nodes, hidden_layers, dev=cpu)
+
+Constructs a neural network model with the specified number of predictors (`npred`), 
+hidden nodes (`hidden_nodes`), and hidden layers (`hidden_layers`). The model uses 
+Batch Normalization and a sigmoid activation function at the output layer. The model 
+is created on the specified device (`dev`), with `cpu` as the default.
+"""
 function build_model(; npred, hidden_nodes, hidden_layers, dev=cpu)
     model = Chain(Dense(npred, hidden_nodes),
         BatchNorm(hidden_nodes),
@@ -22,6 +30,13 @@ function build_model(; npred, hidden_nodes, hidden_layers, dev=cpu)
     return model
 end
 
+"""
+    process_data(df; train_split=0.9, batchsize=128)
+
+Prepares the data for training and testing. Splits the dataset `df` into training and 
+test sets based on `train_split`. Normalizes the predictors using `Standardizer`. 
+Returns data loaders for both training and testing sets with specified `batchsize`.
+"""
 function process_data(df; train_split=0.9, batchsize=128)
 
     pred_data = df[:,[:x, :y, :temp, :t]] # .|> Float32

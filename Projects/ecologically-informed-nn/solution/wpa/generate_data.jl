@@ -3,10 +3,10 @@ using CSV
 include("simulate_dynamical_model.jl")
 
 """
-    generate_PA_data(; env_data, proba_observation_raster, n_samples, standardizer)
-Generate `n_samples` presence absence mock up occurences based on
-`proba_observation_raster`, together with associated predictors. Predictors are
-standardized witha `standardizer`.
+    generate_PA_data(; env_data, proba_observation_raster, n_samples)
+Generate `n_samples` presence absence occurences based on
+`proba_observation_raster`, and returns it together with associated predictors.
+Predictors are standardized witha `standardizer`.
 """
 function generate_PA_data(;env_data, proba_observation_raster, n_samples)
     idx_xy = sample(DimIndices(proba_observation_raster), n_samples, replace=false)
