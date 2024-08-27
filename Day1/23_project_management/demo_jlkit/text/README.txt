@@ -1,0 +1,1 @@
+This folder contains the main text of the manuscript as well as a folder with the supplementary material and one with references.

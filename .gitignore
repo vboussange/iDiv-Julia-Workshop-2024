@@ -1,4 +1,6 @@
 Manifest.toml
 *.jld2
 *.CondaPkg
-*.html
+# *.html
+_files
+*_cache
