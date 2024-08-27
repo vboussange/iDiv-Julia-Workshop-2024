@@ -67,13 +67,13 @@ axlist = (
 
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "slide"}}
 md"""
-the data to feed to the `YAXArray` matching the dimensions defined in the axlist:
+- the data to feed to the `YAXArray` matching the dimensions defined in the axlist:
 """
 data = rand(20, 10, 15, 2)
 
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "slide"}}
 md"""
-and additionally some metadata:
+- and additionally some metadata:
 """
 props = Dict(
     "origin" => "YAXArrays.jl example",
@@ -114,9 +114,8 @@ Like normal arrays you can modify the data performing simple arithmetics. Additi
 
 """
 yaxa_rand.data
-"""
 
-"""
+#-
 add_yaxa = yaxa_rand .+ 5
 add_yaxa.data
 
@@ -145,7 +144,7 @@ We computed the average value of the points in time, so no time variable is pres
 Similartly we can compute the spatial means in one value per time step:
 
 """
-a2_spacemean = mapslices(mean, a, dims=("lat", "lon"))
+a2_spacemean = mapslices(mean, a2, dims=("X", "Y"))
 
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "slide"}}
 md"""
@@ -172,17 +171,19 @@ See how the user defined function passed to mapCube has to have the signature f(
 medians = mapCube(apply_median, c[Variable=Where(contains("temp"))];indims, outdims)
 
 
-
-
-
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "slide"}}
 md"""
 # Exercise
 
-- Download the Swiss Glacier Inventory 2016 from https://www.glamos.ch/en/downloads#inventories/B56-03
-- look up Gornergletscher
-- plot it into the last plot we just did
-- mask the elevation map with the Gornergletscher outline and calculate the mean elevation
+- Load "bands.zarr" 
+- Define some spectral indices calulations for your favourite indices. Keep in mind that we have the following bands:
+  - B02 (Band 2): Blue (approximately 490 nm)
+  - B03 (Band 3): Green (approximately 560 nm)
+  - B04 (Band 4): Red (approximately 665 nm)
+  - B08 (Band 8): Near Infrared (NIR) (approximately 842 nm)
+The results are given leveraging the NDVI = (N-R)/(N+R)
+- If you use NDVI you have to divide the data by 10000 to get it in the expected range.
+- Apply this calculations to the data in the cube. Use a naive approach, `map` and `mapCube`. Are the results equivalent?
 """
 
 #nb # %% A slide [markdown] {"slideshow": {"slide_type": "slide"}}
@@ -190,41 +191,36 @@ md"""
 # Exercise solution
 """
 
-!isfile("data/sgi.zip") && Downloads.download("https://doi.glamos.ch/data/inventory/inventory_sgi2016_r2020.zip", "data/sgi.zip")
-zip = ZipFile.Reader("data/sgi.zip")
-for f in zip.files
-    name = basename(f.name)
-    if startswith(name, "SGI_2016_glaciers")
-        write("data/$(name)", read(f))
-    end
+path=pwd()*"/bands.zarr"
+bands_cube = Cube(path)
+
+#-
+# naive computation
+N = bands_cube[bands=At("B08")]
+R = bands_cube[bands=At("B04")]
+ndvi_naive = (N.-R)./(N.+R)
+
+#-
+#map computation
+ndvi(n, r) = (n-r)/(n+r)
+ndvi_map = map(ndvi, N, R)
+
+ndvi_naive == ndvi_map
+
+#-
+#mapCube computation
+
+#remodel the function to feed it to mapCube
+function ndvi_mc(xout, x1, x2)
+    xout .= ndvi.(x1, x2)
 end
-close(zip)
-#-
 
-using Shapefile
-sgi = Shapefile.Table("data/SGI_2016_glaciers.shp")
-ind = findfirst(skipmissing(sgi.name.=="Gornergletscher"))
+#provide in and out dimensions
+in_dims = InDims("x") # the second one will be inferred
+out_dims = OutDims("x") # ditto
 
-plot(sgi.geometry[ind])
-#-
+# put it all together
+ndvi_mapcube = mapCube(ndvi_mc, (N, R), indims=(in_dims, in_dims),
+    outdims=OutDims("x", outtype=Float64))
 
-# load DHM again with the CRS (coord reference system) specifed
-ra = Raster("data/dhm200.asc", crs=EPSG(21781))
-
-ra_z = crop(ra; to = tab.geometry[zermatt])
-mask_z = mask(ra_z, with = tab.geometry[zermatt])
-
-# The shapefile for Gorner is in the newer LV95 coordinates.
-# -> transform the raster to LV95 (only the already cropped one)
-lv95 = EPSG(2056)
-ra_z_95 = resample(ra_z, 1, crs=lv95)
-
-#-
-mask_gor = mask(ra_z_95, with = sgi.geometry[ind])
-using Plots
-plot(mask_gor)
-
-#-
-# mean elevation, just count the not masked points (mask is -9999)
-using Statistics
-mean(mask_gor[mask_gor[:].>0])
+ndvi_mapcube == ndvi_map
