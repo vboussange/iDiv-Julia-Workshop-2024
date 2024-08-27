@@ -30,10 +30,8 @@ end
 ## create a random vector of 1 million numbers
 fahrenheits = rand(0:250, 1000000)
 
-## run the functions once to make sure they are compiled
-## (the first execution is always much slower!)
-converttocelsiusA(fahrenheits);
-converttocelsiusB(fahrenheits);
+precompile(converttocelsiusA, (Vector,))
+precompile(converttocelsiusB, (Vector,))
 
 ## Note: adding a semi-colon after a line of code suppresses
 ## the REPL output - in this case, we don't want to see the array
@@ -105,3 +103,63 @@ end
 Profile.clear()
 @profile updateplants(biome);
 Profile.print(format=:flat)
+
+
+#### EXERCISE 4: Euler 3
+
+# (Taken from: https://projecteuler.net/problem=3)
+# The prime factors of 13195 are 5, 7, 13, and 29.
+# What is the largest prime factor of the number 600851475143?
+
+## First attempt
+
+isfactor(x, y) = iszero(x % y)
+
+function isprime(n)
+    n == 1 && return false
+    for i in 2:(n-1)
+        isfactor(n, i) && return false
+    end
+    return true
+end
+
+function factors(x)
+    factorlist = []
+    for i in 1:x
+        isfactor(x, i) && push!(factorlist, i)
+    end
+    factorlist
+end
+
+function largestprimefactor(n)
+    primefactors = []
+    for f in factors(n)
+        isprime(f) && push!(primefactors, f)
+    end
+    return maximum(primefactors)
+end
+
+@time largestprimefactor(13195)
+@time largestprimefactor(600851475143)
+
+## Second attempt
+
+function isprime2(n::Int64)
+    (n == 1 || iszero(n % 2)) && return false
+    i = 3
+    while i < n
+        iszero(n % i) && return false
+        i += 2
+    end
+    return true
+end
+
+function largestprimefactor2(n::Int64)
+    for j in 1:n
+        (iszero(n % j) && isprime2(div(n,j))) && return div(n,j)
+    end
+    return nothing
+end
+
+@time largestprimefactor2(13195)
+@time largestprimefactor2(600851475143)
