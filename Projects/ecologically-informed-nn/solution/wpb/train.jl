@@ -58,6 +58,13 @@ function process_data(df; train_split=0.9, batchsize=128)
         standardizer)
 end
 
+"""
+    project_spatially(nn, ps, st, landscape, t, standardizer)
+
+Projects the trained model `nn` spatially over the landscape at time `t`. 
+Applies the `standardizer` to the input data and uses the model parameters 
+`ps` and state `st` to generate predictions. Returns a raster of predicted values.
+"""
 function project_spatially(nn, ps, st, landscape, t, standardizer)
     temp = landscape.raster
     
@@ -73,6 +80,13 @@ function project_spatially(nn, ps, st, landscape, t, standardizer)
     return urast
 end
 
+"""
+    loss(model, ps, st, data)
+
+Calculates the loss for the model `model` using parameters `ps`, state `st`, and 
+input data `data`. The loss is computed as the binary cross-entropy between 
+predicted and actual values. Returns the loss and updated state.
+"""
 function loss(model, ps, st, data)
     x, y = data
     ŷ, st = Lux.apply(model, x, ps, st)
@@ -81,8 +95,10 @@ function loss(model, ps, st, data)
 end
 
 """
-    plot_predictions(nn, pred)
-Plots model predictions.
+    plot_predictions(nn, pred, landscape)
+
+Plots the predictions of the model `nn` over the given landscape using `pred` as input data. 
+Returns a plot of the predicted raster values.
 """
 function plot_predictions(nn, pred, landscape)
     predicted = reshape(nn(pred), :)
@@ -91,25 +107,11 @@ function plot_predictions(nn, pred, landscape)
 end
 
 """
-    train(; nns, 
-            dyn_model, 
-            data_rasters, 
-            env_data, 
-            standardizer, 
-            optim, 
-            n_epochs, 
-            n_samples, 
-            p_dyn_model,
-            τ,
-            mechanistic_constraints = false)
+    train(; df, model, opt, n_epochs, print_freq, kwargs...)
 
-Perform training. `dyn_model` is the dynamical model to enforce the dynamics.
-`data_rasters` is the full dataset used to create mock-up PA data. `env_data`
-corresponds to the environmental predictor dataset. `standatdizer` is a MLJ
-machine to standardize the data. `optim` is used to train the NN. `n_samples` is
-the number of mock-up samples to be create at the shallowest time step. This
-number is reduced exponentially .`τ` characterises the decay in sample number.
-across time steps (smaller `τ` means less data deep in time)
+Trains the model `model` using the dataset `df` for `n_epochs` with optimizer `opt`. 
+Prints progress every `print_freq` epochs. The training process uses additional 
+parameters passed through `kwargs`. Returns the trained parameters and model state.
 """
 function train(;df,
                 model,
