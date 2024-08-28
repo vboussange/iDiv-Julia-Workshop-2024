@@ -7,7 +7,7 @@ using Graphs, SimpleWeightedGraphs
 using UnPack
 using SparseArrays
 using LinearAlgebra
-using Rasters, RasterDataSources
+using Rasters, RasterDataSources, ArchGDAL
 
 abstract type AbstractDynModel end
 
