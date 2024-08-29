@@ -9,7 +9,7 @@ include(@__DIR__() * "/../../project_src/utils.jl")
 Exponential dispersal kernel with mean distance `dd`, returning corresponding
 proximity.
 """
-disp_kern = function(x::T, α, threshold = 0.1) where T
+function disp_kern(x::T, α, threshold = 0.1) where T
     prox = exp(-x / α)
     if prox < threshold
         return zero(T)

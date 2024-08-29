@@ -68,6 +68,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="ecologically-informed-nn_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="ecologically-informed-nn_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -99,7 +128,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   </ul></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="ecologically-informed-nn.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="ecologically-informed-nn.md"><i class="bi bi-file-code"></i>CommonMark</a></li><li><a href="../../ecologically-informed-nn.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
 </div>
 <main class="content" id="quarto-document-content">
 
@@ -122,7 +151,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><img src="https://files.ipbes.net/ipbes-web-prod-public-files/styles/xl_1920_scale/azblob/2023-09/IAS%20website%20image.png.webp?itok=tVaiqu2q" class="img-fluid"></p>
+<p><img src="https://files.ipbes.net/ipbes-web-prod-public-files/2024-02/EXPO%20TVDC%20045-2_CMJN_YANN%20ARTHUS%20BERTRAND.jpg" class="img-fluid"></p>
 <p>Invasive species pose major threats on nature, nature’s contributions to people, and good quality of life (<a href="https://zenodo.org/records/3553579">IPBES, 2019</a>), with global annual costs estimated to exceed 423 billion USD. The management of invasive alien species requires the modelling of the species range and spread dynamics, in order to optimally allocate control effort. While current state-of-the-art modelling approaches such as deep learning species distribution model (deep SDM) can help in determining the potential niche of invasive alien species (e.g., <a href="https://www.nature.com/articles/s41467-024-48559-9">Brun et al.&nbsp;2024</a>), they assume that species are always in equilibrium with their environment, neglecting key transient ecological processes such as demographic changes and dispersal. This oversight is problematic, because these processes are crucial in determining the establishment of a species in a novel environment.</p>
 <p>The proposed project aims to fill this gap by developing an ecologically-informed neural network, following a physics-informed neural network approach (see e.g.<a href="https://www.nature.com/articles/s41467-024-48559-9">Raissi et al.&nbsp;2019</a>).</p>
 <p><img src="https://benmoseley.blog/wp-content/uploads/2021/08/pinn-1536x608.png" class="img-fluid"></p>
@@ -148,32 +177,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The different work packages below can be addressed independently and distributed among different teams. The team could collaborate on a public repository.</p>
 <section id="wp-a-process-based-model" class="level3">
 <h3 class="anchored" data-anchor-id="wp-a-process-based-model"><strong>WP A</strong>: Process-based model</h3>
-<p>The goal is to construct a model which simulates the dynamics of species abundance on a landscape. Given a landscape consisting of <eq env="math">P</eq> patches <eq env="math">\{p_1, \dots, p_P \}</eq>, we want to model the dynamics of the population abundance vector <eq env="math">{\bf n}_{t} = (n_{1, t}, \dots, n_{P, t})</eq> where <eq env="math">n_{i, t}</eq> corresponds to the population density on <eq env="math">p_i</eq>.</p>
+<p>The goal is to construct a model which simulates the dynamics of species abundance on a landscape. Given a landscape consisting of <span class="math inline">\(P\)</span> patches <span class="math inline">\(\{p_1, \dots, p_P \}\)</span>, we want to model the dynamics of the population abundance vector <span class="math inline">\({\bf n}_{t} = (n_{1, t}, \dots, n_{P, t})\)</span> where <span class="math inline">\(n_{i, t}\)</span> corresponds to the population density on <span class="math inline">\(p_i\)</span>.</p>
 <p>We will assume that the population experiences a logistic growth, and that it is subject to dispersal. We will use a difference equation model to express these processes</p>
-<p><eq env="displaymath">
+<p><span class="math display">\[
 n_{i, t+1} = n_{i, t} + [F({\bf n_t})]_i,
-</eq> where <eq env="displaymath">
+\]</span> where <span class="math display">\[
 [F({\bf n_t})]_i  = \mathcal{E}(n_{i, t}) + [\mathcal{D}({\bf n_t})]_i.
-</eq> Here, <eq env="math">\mathcal{E}</eq> coresponds to the ecological dynamics, <eq env="displaymath">
+\]</span> Here, <span class="math inline">\(\mathcal{E}\)</span> coresponds to the ecological dynamics, <span class="math display">\[
 \mathcal{E}(n_{i, t}) = n_{i, t}(1 - \frac{n_{i, t}}{K_i})
-</eq> with <eq env="math">K_i</eq> the carrying capacity on patch <eq env="math">p_i</eq>, and where <eq env="math">\mathcal{D}</eq> is the dispersal kernel <eq env="displaymath">
+\]</span> with <span class="math inline">\(K_i\)</span> the carrying capacity on patch <span class="math inline">\(p_i\)</span>, and where <span class="math inline">\(\mathcal{D}\)</span> is the dispersal kernel <span class="math display">\[
 [\mathcal{D}({\bf n_t})]_i = \left[ \sum_j  u_{j, t} m_{j, i} - \sum_j  u_{i, t} m_{i, j}\right]
-</eq></p>
-<p>with <eq env="math">m_{j,i}</eq> the proportion of individuals migrating from <eq env="math">p_j</eq> to <eq env="math">p_i</eq>. The first term corresponds to incoming individuals, the second to leaving individuals.</p>
+\]</span></p>
+<p>with <span class="math inline">\(m_{j,i}\)</span> the proportion of individuals migrating from <span class="math inline">\(p_j\)</span> to <span class="math inline">\(p_i\)</span>. The first term corresponds to incoming individuals, the second to leaving individuals.</p>
 <section id="ecology" class="level4">
 <h4 class="anchored" data-anchor-id="ecology">Ecology</h4>
-<p>We will assume that <eq env="displaymath">
+<p>We will assume that <span class="math display">\[
 K_{i} = e^{-\kappa(T_i - T^\star)^2}
-</eq> where <eq env="math">T_i</eq> is the temperature on patch <eq env="math">p_i</eq>, <eq env="math">T^\star</eq> is the optimal temperature for the species, and <eq env="math">\kappa</eq> defines how the carrying capacity decreases under sub-optimal conditions.</p>
+\]</span> where <span class="math inline">\(T_i\)</span> is the temperature on patch <span class="math inline">\(p_i\)</span>, <span class="math inline">\(T^\star\)</span> is the optimal temperature for the species, and <span class="math inline">\(\kappa\)</span> defines how the carrying capacity decreases under sub-optimal conditions.</p>
 </section>
 <section id="dispersal" class="level4">
 <h4 class="anchored" data-anchor-id="dispersal">Dispersal</h4>
-<p>We will assume that <eq env="displaymath">
+<p>We will assume that <span class="math display">\[
 m_{i,j} = \begin{cases}
 m \, e^{-d_{i,j}/\alpha}, &amp; \text{if } i \neq j \\
 0, &amp; \text{if } i = j
 \end{cases}
-</eq> where <eq env="math">m</eq> is the migration rate and <eq env="math">d_{i,j}</eq> is the distance between <eq env="math">p_i</eq> and <eq env="math">p_j</eq>.</p>
+\]</span> where <span class="math inline">\(m\)</span> is the migration rate and <span class="math inline">\(d_{i,j}\)</span> is the distance between <span class="math inline">\(p_i\)</span> and <span class="math inline">\(p_j\)</span>.</p>
 <div class="callout callout-style-default callout-warning no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -209,12 +238,13 @@ Loading the data
 <div id="callout-2" class="callout-2-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>You will use temperature data from CHELSA. Run the following snippet. It will download the <code>bio1</code> raster from CHELSA, and load it.</p>
-<div id="5767ac4b" class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="st">"project_src/utils.jl"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>temp <span class="op">=</span> <span class="fu">load_raster</span>()</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(temp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="c8e436a7" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Plots</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="st">"project_src/utils.jl"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>temp <span class="op">=</span> <span class="fu">load_raster</span>()</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(temp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -233,16 +263,17 @@ Defining the landscape
 <div class="callout-body-container callout-body">
 <p>The <code>utils.jl</code> file provides you with a <code>Landscape</code> struct. This struct is very useful, because it calculates the distance between all pixels of a raster. Use it in your model!</p>
 <p>Here is a snippet of how you can use it:</p>
-<div id="86a4edbd" class="cell" data-execution_count="3">
+<div id="182b302e" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>landscape <span class="op">=</span> <span class="fu">Landscape</span>(temp)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>landscape.dists</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here, <code>landscape.dists[i, j]</code> corresponds to the <code>d_{i,j}</code> coefficient, i.e.&nbsp;the distance between pixel <code>i</code> and <code>j</code>.</p>
 <p>The method <code>get_raster_values</code> allows you to transform a flat vector into a raster corresponding to the associated landscape.</p>
 <p>For illustration purposes, here we plot the distance of all patch to the 400th patch in the landscape:</p>
-<div id="939f464e" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>distances_to_400 <span class="op">=</span> <span class="fu">get_raster_values</span>(landscape.dists[<span class="fl">400</span>,<span class="op">:</span>], landscape)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(distances_to_400)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="6179f825" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>landscape <span class="op">=</span> <span class="fu">Landscape</span>(temp)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>distances_to_400 <span class="op">=</span> <span class="fu">get_raster_values</span>(landscape.dists[<span class="fl">400</span>,<span class="op">:</span>], landscape)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(distances_to_400)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -259,7 +290,7 @@ Numerical values
 </div>
 <div id="callout-4" class="callout-4-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<div id="8ab161c4" class="cell" data-execution_count="5">
+<div id="65176b55" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>T0 <span class="op">=</span> <span class="fl">4</span>. <span class="co"># optimal growth temperature</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>κ <span class="op">=</span> <span class="fl">1</span>.</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>α <span class="op">=</span> <span class="fl">4</span>. <span class="co"># mean dispersal distance</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -280,7 +311,7 @@ Initial conditions
 <div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>We suggest using the following initial conditions:</p>
-<div id="91022987" class="cell" data-execution_count="6">
+<div id="3870c370" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> <span class="fu">lookup</span>(temp, X)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> <span class="fu">lookup</span>(temp, Y)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>x_0 <span class="op">=</span> x[<span class="fu">floor</span>(<span class="dt">Int</span>, <span class="fu">length</span>(x)<span class="op">/</span><span class="fl">2</span>)]</span>
@@ -306,11 +337,11 @@ Defining state variables
 <div id="callout-6" class="callout-6-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>It will be easier to handle a flat vector for calculating the dynamics.</p>
-<div id="c30b8060" class="cell" data-execution_count="7">
+<div id="3bdcea56" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>u0 <span class="op">=</span> u0_raster[<span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>But you can use the following helper to transform <code>u0</code> or any state variable vector into a raster</p>
-<div id="db203f6f" class="cell" data-execution_count="8">
+<div id="0c1afdb2" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">get_raster_values</span>(u0, landscape))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
@@ -328,12 +359,30 @@ Dispersal kernel
 </div>
 <div id="callout-7" class="callout-7-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>Implementing the dispersal kernel is not trivial - you need to do it write to get performance. Consider using the following implementation:</p>
-<div id="049507ce" class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>disp_proximities <span class="op">=</span> <span class="fu">sparse</span>(<span class="fu">disp_kern</span>.(landscape.dists)) <span class="co"># we transform the distances in proximities</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>D <span class="op">=</span> <span class="op">-</span> m <span class="op">*</span> (I <span class="op">-</span> (disp_proximities <span class="op">./</span> <span class="fu">sum</span>(disp_proximities,dims<span class="op">=</span><span class="fl">1</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Implementing the dispersal kernel is not trivial - you need to define it carefully to get nice performance.</p>
+<p>Two tricks can be used:</p>
+<ul>
+<li><ol type="1">
+<li>Defining a cut-off value for <span class="math inline">\(m_{i,j}\)</span> where above a certain distance <span class="math inline">\(d_{i,j}\)</span>, <span class="math inline">\(m_{i,j}\)</span> becomes 0.</li>
+</ol></li>
+<li><ol start="2" type="1">
+<li>Based on this cut-off, defining a sparse matrix <span class="math inline">\(D\)</span> so that <span class="math inline">\(\mathcal{D}({\bf n}_t) = D {\bf n_t}\)</span>. You may want to have a look at laplacian matrices</li>
+</ol></li>
+</ul>
+<p>Consider using the following implementation:</p>
+<div id="ded85c1b" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">disp_kern</span>(x<span class="op">::</span><span class="dt">T</span>, α, threshold <span class="op">=</span> <span class="fl">0.1</span>) <span class="kw">where</span> T</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    prox <span class="op">=</span> <span class="fu">exp</span>(<span class="op">-</span>x <span class="op">/</span> α)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> prox <span class="op">&lt;</span> threshold</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">zero</span>(T)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> prox</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>disp_proximities <span class="op">=</span> <span class="fu">sparse</span>(<span class="fu">disp_kern</span>.(landscape.dists)) <span class="co"># we transform the distances in proximities</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>D <span class="op">=</span> <span class="op">-</span> m <span class="op">*</span> (I <span class="op">-</span> (disp_proximities <span class="op">./</span> <span class="fu">sum</span>(disp_proximities,dims<span class="op">=</span><span class="fl">1</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Now you need to convince yourself that <code>D * u</code> exactly equals <eq env="math">\mathcal{D}({\bf n}_t)</eq>.</p>
+<p>Now you need to convince yourself that <code>D * u</code> exactly equals <span class="math inline">\(\mathcal{D}({\bf n}_t)\)</span>.</p>
 </div>
 </div>
 </div>
@@ -385,11 +434,11 @@ You could consider any sort of model, but here are some examples
 </section>
 <section id="wp-b-constructing-a-deep-sdm-in-julia" class="level3">
 <h3 class="anchored" data-anchor-id="wp-b-constructing-a-deep-sdm-in-julia"><strong>WP B</strong>: Constructing a deep SDM in Julia</h3>
-<p>The goal is to construct a deep SDM <eq env="math">\text{NN}</eq> which can predict the species distribution at time <eq env="math">t</eq>, given an array of absence-presence observations.</p>
-<p><eq env="displaymath">
+<p>The goal is to construct a deep SDM <span class="math inline">\(\text{NN}\)</span> which can predict the species distribution at time <span class="math inline">\(t\)</span>, given an array of absence-presence observations.</p>
+<p><span class="math display">\[
 \hat y = \text{NN}(\text{long},\text{lat},E,t)
-</eq></p>
-<p>Given that the species range changes over time, spatial coordinates <eq env="math">(long, lat)</eq>, environmental predictors <eq env="math">E</eq> (for this exercise, we’ll use <code>bio1</code> from CHELSA), and time <eq env="math">t</eq> will be used as inputs to the SDM.</p>
+\]</span></p>
+<p>Given that the species range changes over time, spatial coordinates <span class="math inline">\((long, lat)\)</span>, environmental predictors <span class="math inline">\(E\)</span> (for this exercise, we’ll use <code>bio1</code> from CHELSA), and time <span class="math inline">\(t\)</span> will be used as inputs to the SDM.</p>
 <div class="callout callout-style-default callout-warning no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -533,16 +582,17 @@ Neural network architecture and loss
 <ul>
 <li>Consider using the following function to create your model.</li>
 </ul>
-<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">build_model</span>(; npred, hidden_nodes, hidden_layers, dev<span class="op">=</span>cpu)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> <span class="fu">Chain</span>(<span class="fu">Dense</span>(npred, hidden_nodes),</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">BatchNorm</span>(hidden_nodes),</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        [<span class="fu">Dense</span>(hidden_nodes, hidden_nodes, tanh) for _ <span class="op">∈</span> <span class="fl">1</span><span class="op">:</span>hidden_layers<span class="op">-</span><span class="fl">1</span>]<span class="op">...</span>,</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">Dense</span>(hidden_nodes, <span class="fl">1</span>),</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        Lux.sigmoid</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Lux</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">build_model</span>(; npred, hidden_nodes, hidden_layers, dev<span class="op">=</span>cpu)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> <span class="fu">Chain</span>(<span class="fu">Dense</span>(npred, hidden_nodes),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">BatchNorm</span>(hidden_nodes),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        [<span class="fu">Dense</span>(hidden_nodes, hidden_nodes, tanh) for _ <span class="op">∈</span> <span class="fl">1</span><span class="op">:</span>hidden_layers<span class="op">-</span><span class="fl">1</span>]<span class="op">...</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">Dense</span>(hidden_nodes, <span class="fl">1</span>),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        Lux.sigmoid</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li>Observe that <code>loss</code> should have the signature <code>loss(model, ps, st, data)</code> to be a valid function to be trained with the <code>Lux.Training</code> API (see box below):</li>
 </ul>
@@ -615,10 +665,11 @@ Projecting the model’s predictions spatially
 <ul>
 <li>To project the deep SDM spatially, you’ll need the <code>temp</code> raster, that you can obtain by running the following snippet. This will download the <code>bio1</code> (mean annual temperature) raster from CHELSA, and load it.</li>
 </ul>
-<div id="36a37a85" class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="st">"project_src/utils.jl"</span>)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>temp <span class="op">=</span> <span class="fu">load_raster</span>()</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(temp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="5e121f77" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Plots</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="st">"project_src/utils.jl"</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>temp <span class="op">=</span> <span class="fu">load_raster</span>()</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(temp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ul>
 <li>With this raster, construct a dataframe containing temp values with associated longitude, latitude, and time. The following snippet permits to create a dataframe with (<code>x, y, temp</code>).</li>
@@ -699,9 +750,9 @@ Loss function
 </div>
 <div class="callout-body-container callout-body">
 <p>The extended loss could have the form</p>
-<p><eq env="displaymath">
+<p><span class="math display">\[
 \mathcal{L} = \sum_i l(\hat{y_{i,t_i}}, y_{i,t_i}) + \sum_{i,j} \left[\hat y_{i, t_{j+1}} - [F({\bf \hat y}_{t_j})]_i\right]^2
-</eq> where <eq env="math">l</eq> is the binary cross entropy loss.</p>
+\]</span> where <span class="math inline">\(l\)</span> is the binary cross entropy loss.</p>
 </div>
 </div>
 <!-- 
