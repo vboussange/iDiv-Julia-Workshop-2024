@@ -13,11 +13,12 @@ format:
         toc-expand: 2
         # html-math-method: gladtex
     md: default
+    pdf: default
 editor:
   render-on-save: true
 ---
 
-![](https://files.ipbes.net/ipbes-web-prod-public-files/styles/xl_1920_scale/azblob/2023-09/IAS%20website%20image.png.webp?itok=tVaiqu2q)
+![](https://files.ipbes.net/ipbes-web-prod-public-files/2024-02/EXPO%20TVDC%20045-2_CMJN_YANN%20ARTHUS%20BERTRAND.jpg)
 
 Invasive species pose major threats on nature, nature’s contributions to people, and good quality of life ([IPBES, 2019](https://zenodo.org/records/3553579)), with global annual costs estimated to exceed 423 billion USD. 
 The management of invasive alien species requires the modelling of the species range and spread dynamics, in order to optimally allocate control effort.
@@ -64,7 +65,7 @@ $$
 with $K_i$ the carrying capacity on patch $p_i$, and where
 $\mathcal{D}$ is the dispersal kernel
 $$
-[\mathcal{D}({\bf n_t})]_i = \left[ \sum_j  u_{j, t} m_{j, i} - \sum_j  u_{i, t} m_{i, j}\right]
+[\mathcal{D}({\bf n_t})]_i = \left[ \sum_j  n_{j, t} m_{j, i} - \sum_j  n_{i, t} m_{i, j}\right]
 $$
 
 with  $m_{j,i}$ the proportion of individuals migrating from $p_j$ to $p_i$. The first term corresponds to incoming individuals, the second to leaving individuals. 
@@ -116,6 +117,7 @@ You are given a `utils.jl` file, which contains helper functions to aid your wor
 You will use temperature data from CHELSA. Run the following snippet. It will download the `bio1` raster from CHELSA, and load it.
 
 ```{julia}
+using Plots
 include("project_src/utils.jl")
 
 temp = load_raster()
@@ -143,6 +145,7 @@ The method `get_raster_values` allows you to transform a flat vector into a rast
 For illustration purposes, here we plot the distance of all patch to the 400th patch in the landscape:
 
 ```{julia}
+landscape = Landscape(temp)
 distances_to_400 = get_raster_values(landscape.dists[400,:], landscape)
 plot(distances_to_400)
 ```
@@ -196,14 +199,28 @@ plot(get_raster_values(u0, landscape))
 ::: {.callout-tip collapse="true"}
 # Dispersal kernel
 
-Implementing the dispersal kernel is not trivial - you need to do it write to get performance. Consider using the following implementation:
+Implementing the dispersal kernel is not trivial - you need to define it carefully to get nice performance. 
+
+Two tricks can be used:
+
+- 1. Defining a cut-off value for $m_{i,j}$ where above a certain distance $d_{i,j}$, $m_{i,j}$ becomes 0. 
+- 2. Based on this cut-off, defining a sparse matrix $D$ so that $\mathcal{D}({\bf n}_t) = D {\bf n_t}$.
+
+Consider using the following implementation:
 
 ```{julia}
+function disp_kern(x::T, α, threshold = 0.1) where T
+    prox = exp(-x / α)
+    if prox < threshold
+        return zero(T)
+    end
+    return prox
+end
 
 disp_proximities = sparse(disp_kern.(landscape.dists)) # we transform the distances in proximities
 D = - m * (I - (disp_proximities ./ sum(disp_proximities,dims=1)))
 ```
-Now you need to convince yourself that `D * u` exactly equals $\mathcal{D}({\bf n}_t)$. 
+Try to convince yourself that `D * u` exactly equals $\mathcal{D}({\bf n}_t)$. For more insights, check what are [Laplacian matrices](https://en.wikipedia.org/wiki/Laplacian_matrix#cite_note-10) 
 :::
 
 ::: {.callout-tip collapse="true"}
@@ -345,6 +362,7 @@ Create a Multi-Layer Perceptron (MLP) using `Lux.Chain` with `Dense` layers. Con
 - Consider using the following function to create your model.
 
 ```julia
+using Lux
 function build_model(; npred, hidden_nodes, hidden_layers, dev=cpu)
     model = Chain(Dense(npred, hidden_nodes),
         BatchNorm(hidden_nodes),
@@ -417,6 +435,7 @@ rng = Random.default_generator()
 - To project the deep SDM spatially, you'll need the `temp` raster, that you can obtain by running the following snippet. This will download the `bio1` (mean annual temperature) raster from CHELSA, and load it.
 
 ```{julia}
+using Plots
 include("project_src/utils.jl")
 temp = load_raster()
 plot(temp)
